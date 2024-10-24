@@ -1,8 +1,8 @@
-# Core structure for creating a finite state machine
-
-const ComponentName = String
-const ComponentId = Base.UUID
-const PortId = Base.UUID
+#
+# Core structures for creating a finite state machine
+#
+abstract type AbstractTransition end
+const ComponentId = Union{String, Int}
 
 """
     TransitionValues
@@ -19,7 +19,7 @@ mutable struct TransitionValues
 	condition::String
 	action::String
 
-	TransitionValues(order; condition, action) = new(order, condition, action)
+	TransitionValues(order; cond, act) = new(order, cond, act)
 end
 
 """
@@ -32,12 +32,12 @@ Fields
     - values: changeable transition parameters;
     - destination: the input port of the component to which the transition is directed.
 """
-struct InTransition
-	id::ComponentId
+struct InTransition <: AbstractTransition
+	id::Int
 	values::TransitionValues
-	destination::PortId
+	destination::ComponentId
 
-	InTransition(id, values; destination) = new(id, values, destination)
+	InTransition(id, values; d) = new(id, values, d)
 end
 
 """
@@ -51,13 +51,13 @@ Fields
     - source: output port of the component from which the transition is directed;
     - destination: the input port of the component to which the transition is directed.
 """
-struct Transition
-	id::ComponentId
+struct Transition <: AbstractTransition
+	id::Int
 	values::TransitionValues
-	source::PortId
-    destination::PortId
+	source::ComponentId
+    destination::ComponentId
 
-	Transition(id, values, source, destination) = new(id, values, source, destination)
+	Transition(id, values; s, d) = new(id, values, s, d)
 end
 
 """
@@ -84,14 +84,14 @@ end
 Auxiliary component.
 
 Fields
-    - name: component name;
+    - id: node unique identifier;
     - inports: list of component input ports;
     - outports: list of component output ports.
 """
 struct Node
-    name::String
-    inports::Vector{PortId}
-    outports::Vector{PortId}
+    id::Int
+    inports::Vector{Int}
+    outports::Vector{Int}
 end
 
 """
@@ -100,18 +100,16 @@ end
 State structure of a machine.
 
 Fields
-    - name: component name;
+    - id: unique state identifier (a.k.a. state name);
     - actions: actions performed by the state;
     - inports: list of component input ports;
     - outports: list of component output ports.
 """
 struct State
-    name::String
-    actions::StateActions
-    inports::Vector{PortId}
-    outports::Vector{PortId}
-
-    State(name, actions; inports, outports) = new(name, action, inports, outports)
+    id::String
+    # actions::StateActions
+    inports::Vector{Int}
+    outports::Vector{Int}
 end
 
 """
@@ -126,16 +124,17 @@ struct Data
 end
 
 """
-    State
+    Machine
 
-State structure of a machine.
+Structure of a finite state machine.
 """
 struct Machine
-    name::String
-    inputs::Vector{InTransition}    
-    states::Dict{ComponentName, State}
-    nodes::Dict{ComponentName, Node}
-    transitions::Dict{PortId, Transition}
-    data::Dict{String, Data}
+    name::String   
+    states::Dict{String, State}
+    nodes::Vector{Node}
+    transitions::Vector{AbstractTransition}
+    data::Vector{Data}
+
+    Machine(name::String) = new(name, Dict{String, State}(), Node[], AbstractTransition[], Data[])
 end
 
