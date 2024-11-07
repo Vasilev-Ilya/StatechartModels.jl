@@ -6,7 +6,9 @@ export Machine,
     state!, 
     transition!, 
     node!, 
-    get_node
+    get_node,
+    get_transition,
+    get_state
 
 include("MachineCore/MachineCore.jl")
 using .MachineCore
