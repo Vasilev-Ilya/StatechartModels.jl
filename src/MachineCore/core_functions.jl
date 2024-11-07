@@ -3,15 +3,22 @@
 #
 
 """
+    state!(machine::Machine; name::String)
+
+Add state with name `name` to the machine.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> state!(machine, "A")
+{0, 0} state `A`.
+
+julia> machine
+{states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
+```
 """
-function state!(
-    machine::Machine; 
-    name::String, 
-    # entry_code::String,
-    # during_code::String, 
-    # exit_code::String,
-    # force::Bool=false,
-)::State
+function state!(machine::Machine; name::String)::State
     states = machine.states
     isempty(name) && error("State name must not be empty.") 
     haskey(states, name) && error("A state with name `$name` already exists.")
@@ -21,17 +28,53 @@ function state!(
 end
 
 """
+    node!(machine::Machine)
+
+Add node to the machine.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> node!(machine)
+{0, 0} node `1`.
+
+julia> machine
+{states: 0, transitions: 0, nodes: 1} machine `simple_machine`.
+```
 """
-function node!(machine::Machine)
+function node!(machine::Machine)::Node
     nodes = machine.nodes
-    node = Node(length(nodes) + 1, Int[], Int[])
-    push!(nodes, node)
+    id = length(nodes) + 1,
+    node = Node(id, Int[], Int[])
+    nodes[id] = node
     return node
 end
 
 """
+    transition!(machine::Machine, s::ComponentId, d::ComponentId; cond::String="", act::String="")
+
+Add transition from source `s` to destination `d` with condition `cond` and action `act` to the machine.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> state!(machine, "A"); state!(machine, "B");
+
+julia> node!(machine); node!(machine);
+
+julia> transition!(machine, "A", "B") # transition between state `A` and state `B`
+{A, B} transition `1`.
+
+julia> transition!(machine, "A", 1, cond="x == 0") # transition between state `A` and node `1` with condition `x == 0`
+{A, 1} transition `2`.
+
+julia> transition!(machine, 2, "B", act="x = 0") # transition between node `2` and state `B` with action `x = 0`
+{2, B} transition `3`.
+````
 """
-function transition!(machine::Machine, s::ComponentId, d::ComponentId; cond::String="", act::String="")
+function transition!(machine::Machine, s::ComponentId, d::ComponentId; cond::String="", act::String="")::Transition
     transitions = machine.transitions
     id = length(transitions) + 1
     if s isa String
@@ -49,22 +92,41 @@ function transition!(machine::Machine, s::ComponentId, d::ComponentId; cond::Str
     end
     _fill_destination!(machine, id, d)
     transition = Transition(id, TransitionValues(order, cond=cond, act=act), s=s, d=d)
-    push!(transitions, transition)
+    transitions[id] = transition
     return transition
 end
 
 """
+    transition!(machine::Machine, d::ComponentId; cond::String="", act::String="")
+
+Add input transition to component `d` with condition `cond` and action `act` to the machine.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> state!(machine, "A"); node!(machine);
+
+julia> transition!(machine, "A") # input transition to state `A`
+Input transition `1` to state `A`.
+
+julia> transition!(machine, 1, act="x = 0") # input transition to node `1` with action `x = 0`
+Input transition `2` to node `1`.
+````
 """
 function transition!(machine::Machine, d::ComponentId; cond::String="", act::String="")
     transitions = machine.transitions
     id = length(transitions) + 1
     _fill_destination!(machine, id, d)
     in_transition = InTransition(id, TransitionValues(order, cond=cond, act=act), d=d)
-    push!(transitions, in_transition)
+    transitions[id] = in_transition
     return in_transition
 end
 
 """
+    _fill_destination!(machine::Machine, id::Int, d::ComponentId)
+
+Add connection information to the destination component in the machine.
 """
 function _fill_destination!(machine::Machine, id::Int, d::ComponentId)
     if d isa String
@@ -82,12 +144,78 @@ function _fill_destination!(machine::Machine, id::Int, d::ComponentId)
 end
 
 """
-"""
-function get_node(nodes::Vector{Node}, n::Int)
-    for node in nodes
-        node.id == n && return node
-    end
-    error("Node $s does not exist.")
-end
+    get_node([T=Dict{Int, Node}, T=Machine], n::Int)
 
-get_node(machine::Machine, n::Int) = get_node(machine.nodes, n)
+Get the structure of node `n`.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> node!(machine); node!(machine);
+
+julia> get_node(machine.nodes, 1)
+{0, 0} node `1`.
+
+julia> get_node(machine, 2)
+{0, 0} node `2`.
+````
+"""
+function get_node end
+
+"""
+    get_transition([T=Dict{Int, Transition}, T=Machine], n::Int)
+
+Get the structure of transition `n`.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> node!(machine); node!(machine);
+
+julia> transition!(machine, 1, 2); transition!(machine, 2, 1);
+
+julia> get_transition(machine.transition, 1)
+{1, 2} transition `1`.
+
+julia> get_transition(machine, 2)
+{2, 1} transition `2`.
+````
+"""
+function get_transition end
+
+"""
+    get_state([T=Dict{String, State}, T=Machine], n::String)
+
+Get the structure of state `n`.
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> state!(machine, "A"); state!(machine, "B");
+
+julia> get_state(machine.states, "A")
+{0, 0} state `A`.
+
+julia> get_state(machine, "B")
+{0, 0} state `B`.
+"""
+function get_state end
+
+for (fname, ftype, idtype) in ((:get_node, :Node, :Int), (:get_transition, :Transition, :Int), (:get_state, :State, :String))
+    @eval begin
+        function $fname(A:::Dict{$idtype, $ftype}, n::$idtype)::$ftype
+            comp::Union{$ftype, Nothing} = get(A, n, nothing)
+            isnothing(comp) && error("$ftype `$n` does not exist.")
+            return comp
+        end
+    end
+end  
+
+for (func_name, fild_name, idtype) in ((:get_node, :nodes, :Int), (:get_transition, :transitions, :Int), (:get_state, :states, :String))
+    @eval begin
+        $func_name(machine::Machine, n::$idtype) = $func_name(getfield(machine, fild_name), n)
+    end
+end

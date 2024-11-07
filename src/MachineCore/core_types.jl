@@ -10,9 +10,9 @@ const ComponentId = Union{String, Int}
 Contains changeable transition parameters.
 
 Fields
-    - order: the order of execution of the transition;
-    - condition: transition condition;
-    - action: action performed during transition.
+- `order`: the order of execution of the transition;
+- `condition`: transition condition;
+- `action`: action performed during transition.
 """
 mutable struct TransitionValues
 	order::Int
@@ -28,9 +28,9 @@ end
 The input transition through which data enters the machine.
 
 Fields
-    - id: unique component identifier;
-    - values: changeable transition parameters;
-    - destination: the input port of the component to which the transition is directed.
+- `id`: unique component identifier;
+- `values`: changeable transition parameters;
+- `destination`: the input port of the component to which the transition is directed.
 """
 struct InTransition <: AbstractTransition
 	id::Int
@@ -46,10 +46,10 @@ end
 Connects the components of the machine
 
 Fields
-    - id: unique component identifier;
-    - values: changeable transition parameters;
-    - source: output port of the component from which the transition is directed;
-    - destination: the input port of the component to which the transition is directed.
+- `id`: unique component identifier;
+- `values`: changeable transition parameters;
+- `source`: output port of the component from which the transition is directed;
+- `destination`: the input port of the component to which the transition is directed.
 """
 struct Transition <: AbstractTransition
 	id::Int
@@ -66,9 +66,9 @@ end
 Actions that the machine must perform.
 
 Fields
-    - entry: action performed when a state is activated;
-    - during: action performed when the state is active;
-    - exit: the action performed when the state is deactivated.
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: the action performed when the state is deactivated.
 """
 mutable struct StateActions
     entry::String
@@ -84,9 +84,9 @@ end
 Auxiliary component.
 
 Fields
-    - id: node unique identifier;
-    - inports: list of component input ports;
-    - outports: list of component output ports.
+- `id`: node unique identifier;
+- `inports`: list of component input ports;
+- `outports`: list of component output ports.
 """
 struct Node
     id::Int
@@ -100,10 +100,10 @@ end
 State structure of a machine.
 
 Fields
-    - id: unique state identifier (a.k.a. state name);
-    - actions: actions performed by the state;
-    - inports: list of component input ports;
-    - outports: list of component output ports.
+- `id`: unique state identifier (a.k.a. state name);
+- `actions`: actions performed by the state;
+- `inports`: list of component input ports;
+- `outports`: list of component output ports.
 """
 struct State
     id::String
@@ -124,17 +124,28 @@ struct Data
 end
 
 """
-    Machine
+    Machine(name::String)
+    
+Creates a finite state machine structure named `name`. The structure contains the following fields:   
+- `name`: machine name;   
+- `states`: dictionary of states;   
+- `nodes`: dictionary of nodes;   
+- `transitions`: dictionary of transitions;   
+- `data`: list of variables used in the machine.   
 
-Structure of a finite state machine.
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine")
+{states: 0, transitions: 0, nodes: 0} machine `simple_machine`.
+```
 """
 struct Machine
     name::String   
     states::Dict{String, State}
-    nodes::Vector{Node}
-    transitions::Vector{AbstractTransition}
+    nodes::Dict{Int, Node}
+    transitions::Dict{Int, AbstractTransition}
     data::Vector{Data}
 
-    Machine(name::String) = new(name, Dict{String, State}(), Node[], AbstractTransition[], Data[])
+    Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, AbstractTransition}(), Data[])
 end
 
