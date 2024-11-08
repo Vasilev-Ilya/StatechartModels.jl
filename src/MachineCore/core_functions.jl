@@ -167,7 +167,7 @@ julia> get_node(machine, 2)
 """
 function get_node(nodes::Dict{Int, Node}, n::Int)::Node
     node::Union{Node, Nothing} = get(nodes, n, nothing)
-    isnothing(node) && error("Node $n does not exist.")
+    isnothing(node) && error("Node `$n` does not exist.")
     return node
 end
 
@@ -195,7 +195,7 @@ julia> get_transition(machine, 2)
 """
 function get_transition(transitions::Dict{Int, Transition}, n::Int)::Transition
     transition::Union{Transition, Nothing} = get(transitions, n, nothing)
-    isnothing(transition) && error("Transition $n does not exist.")
+    isnothing(transition) && error("Transition `$n` does not exist.")
     return transition
 end
 
@@ -220,7 +220,7 @@ julia> get_state(machine, "B")
 """
 function get_state(states::Dict{String, State}, n::String)::State
     state::Union{State, Nothing} = get(states, n, nothing)
-    isnothing(state) && error("State $n does not exist.")
+    isnothing(state) && error("State `$n` does not exist.")
     return state
 end
 
