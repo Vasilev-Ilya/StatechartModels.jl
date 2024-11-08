@@ -1,7 +1,6 @@
 #
 # Core structures for creating a finite state machine
 #
-abstract type AbstractTransition end
 const ComponentId = Union{String, Int}
 
 """
@@ -23,24 +22,6 @@ mutable struct TransitionValues
 end
 
 """
-    InTransition
-
-The input transition through which data enters the machine.
-
-Fields
-- `id`: unique component identifier;
-- `values`: changeable transition parameters;
-- `destination`: the input port of the component to which the transition is directed.
-"""
-struct InTransition <: AbstractTransition
-	id::Int
-	values::TransitionValues
-	destination::ComponentId
-
-	InTransition(id, values; d) = new(id, values, d)
-end
-
-"""
     Transition
 
 Connects the components of the machine
@@ -51,10 +32,10 @@ Fields
 - `source`: output port of the component from which the transition is directed;
 - `destination`: the input port of the component to which the transition is directed.
 """
-struct Transition <: AbstractTransition
+struct Transition
 	id::Int
 	values::TransitionValues
-	source::ComponentId
+	source::Union{ComponentId, Nothing}
     destination::ComponentId
 
 	Transition(id, values; s, d) = new(id, values, s, d)
@@ -143,9 +124,9 @@ struct Machine
     name::String   
     states::Dict{String, State}
     nodes::Dict{Int, Node}
-    transitions::Dict{Int, AbstractTransition}
+    transitions::Dict{Int, Transition}
     data::Vector{Data}
 
-    Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, AbstractTransition}(), Data[])
+    Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, Transition}(), Data[])
 end
 

@@ -3,7 +3,7 @@
 #
 
 """
-    state!(machine::Machine; name::String)
+    state!(machine::Machine, name::String)
 
 Add state with name `name` to the machine.
 
@@ -18,7 +18,7 @@ julia> machine
 {states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-function state!(machine::Machine; name::String)::State
+function state!(machine::Machine, name::String)::State
     states = machine.states
     isempty(name) && error("State name must not be empty.") 
     haskey(states, name) && error("A state with name `$name` already exists.")
@@ -45,7 +45,7 @@ julia> machine
 """
 function node!(machine::Machine)::Node
     nodes = machine.nodes
-    id = length(nodes) + 1,
+    id = length(nodes) + 1
     node = Node(id, Int[], Int[])
     nodes[id] = node
     return node
@@ -118,9 +118,13 @@ function transition!(machine::Machine, d::ComponentId; cond::String="", act::Str
     transitions = machine.transitions
     id = length(transitions) + 1
     _fill_destination!(machine, id, d)
-    in_transition = InTransition(id, TransitionValues(order, cond=cond, act=act), d=d)
-    transitions[id] = in_transition
-    return in_transition
+    order = 1
+    for (_, tra) in transitions
+        isnothing(tra.source) && (order += 1;)
+    end
+    transition = Transition(id, TransitionValues(order, cond=cond, act=act), s=nothing, d=d)
+    transitions[id] = transition
+    return transition
 end
 
 """
@@ -146,7 +150,7 @@ end
 """
     get_node([T=Dict{Int, Node}, T=Machine], n::Int)
 
-Get the structure of node `n`.
+Get the structure of node n.
 
 # Examples
 ```jldoctest
@@ -155,18 +159,24 @@ julia> machine = Machine("simple_machine");
 julia> node!(machine); node!(machine);
 
 julia> get_node(machine.nodes, 1)
-{0, 0} node `1`.
+{0, 0} node 1.
 
 julia> get_node(machine, 2)
-{0, 0} node `2`.
+{0, 0} node 2.
 ````
 """
-function get_node end
+function get_node(nodes::Dict{Int, Node}, n::Int)::Node
+    node::Union{Node, Nothing} = get(nodes, n, nothing)
+    isnothing(node) && error("Node $n does not exist.")
+    return node
+end
+
+get_node(machine::Machine, n::Int) = get_node(machine.nodes, n)
 
 """
     get_transition([T=Dict{Int, Transition}, T=Machine], n::Int)
 
-Get the structure of transition `n`.
+Get the structure of transition n.
 
 # Examples
 ```jldoctest
@@ -176,19 +186,25 @@ julia> node!(machine); node!(machine);
 
 julia> transition!(machine, 1, 2); transition!(machine, 2, 1);
 
-julia> get_transition(machine.transition, 1)
-{1, 2} transition `1`.
+julia> get_transition(machine.transitions, 1)
+{1, 2} transition 1.
 
 julia> get_transition(machine, 2)
-{2, 1} transition `2`.
+{2, 1} transition 2.
 ````
 """
-function get_transition end
+function get_transition(transitions::Dict{Int, Transition}, n::Int)::Transition
+    transition::Union{Transition, Nothing} = get(transitions, n, nothing)
+    isnothing(transition) && error("Transition $n does not exist.")
+    return transition
+end
+
+get_transition(machine::Machine, n::Int) = get_transition(machine.transitions, n)
 
 """
     get_state([T=Dict{String, State}, T=Machine], n::String)
 
-Get the structure of state `n`.
+Get the structure of state n.
 
 # Examples
 ```jldoctest
@@ -197,25 +213,15 @@ julia> machine = Machine("simple_machine");
 julia> state!(machine, "A"); state!(machine, "B");
 
 julia> get_state(machine.states, "A")
-{0, 0} state `A`.
+{0, 0} state A.
 
 julia> get_state(machine, "B")
-{0, 0} state `B`.
+{0, 0} state B.
 """
-function get_state end
-
-for (fname, ftype, idtype) in ((:get_node, :Node, :Int), (:get_transition, :Transition, :Int), (:get_state, :State, :String))
-    @eval begin
-        function $fname(A:::Dict{$idtype, $ftype}, n::$idtype)::$ftype
-            comp::Union{$ftype, Nothing} = get(A, n, nothing)
-            isnothing(comp) && error("$ftype `$n` does not exist.")
-            return comp
-        end
-    end
-end  
-
-for (func_name, fild_name, idtype) in ((:get_node, :nodes, :Int), (:get_transition, :transitions, :Int), (:get_state, :states, :String))
-    @eval begin
-        $func_name(machine::Machine, n::$idtype) = $func_name(getfield(machine, fild_name), n)
-    end
+function get_state(states::Dict{String, State}, n::String)::State
+    state::Union{State, Nothing} = get(states, n, nothing)
+    isnothing(state) && error("State $n does not exist.")
+    return state
 end
+
+get_state(machine::Machine, n::String) = get_state(machine.states, n)

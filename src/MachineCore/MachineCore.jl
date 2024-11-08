@@ -1,8 +1,8 @@
 module MachineCore
 
-    export Machine, State, InTransition, Transition, Node
+    export Machine, State, Transition, Node
     
-    export state!, transition!, node!, get_node
+    export state!, transition!, node!, get_node, get_transition, get_state
 
     include("core_types.jl")
 
@@ -10,12 +10,6 @@ module MachineCore
         s = transition.source
         d = transition.destination
         return print(io, "{$s, $d} transition `$(transition.id)`.")
-    end
-
-    function Base.show(io::IO, ::MIME"text/plain", in_transition::InTransition)
-        d = in_transition.destination
-        comp = d isa String ? "state" : "Node"
-        return print(io, "Input transition `$(in_transition.id)` to $comp `$d`.")
     end
 
     function Base.show(io::IO, ::MIME"text/plain", state::State)
