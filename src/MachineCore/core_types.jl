@@ -9,16 +9,20 @@ const ComponentId = Union{String, Int}
 Contains changeable transition parameters.
 
 Fields
+- `source`: output port of the component from which the transition is directed;
+- `destination`: the input port of the component to which the transition is directed.
 - `order`: the order of execution of the transition;
 - `condition`: transition condition;
 - `action`: action performed during transition.
 """
 mutable struct TransitionValues
+	source::Union{ComponentId, Nothing}
+    destination::ComponentId
 	order::Int
 	condition::String
 	action::String
 
-	TransitionValues(order; cond, act) = new(order, cond, act)
+	TransitionValues(s, d; order, cond="", act="") = new(s, d, order, cond, act)
 end
 
 """
@@ -28,35 +32,13 @@ Connects the components of the machine
 
 Fields
 - `id`: unique component identifier;
-- `values`: changeable transition parameters;
-- `source`: output port of the component from which the transition is directed;
-- `destination`: the input port of the component to which the transition is directed.
+- `values`: changeable transition parameters.
 """
 struct Transition
 	id::Int
 	values::TransitionValues
-	source::Union{ComponentId, Nothing}
-    destination::ComponentId
 
-	Transition(id, values; s, d) = new(id, values, s, d)
-end
-
-"""
-    StateActions
-
-Actions that the machine must perform.
-
-Fields
-- `entry`: action performed when a state is activated;
-- `during`: action performed when the state is active;
-- `exit`: the action performed when the state is deactivated.
-"""
-mutable struct StateActions
-    entry::String
-    during::String
-    exit::String
-
-    StateActions(; entry, during, exit) = new(entry, during, exit)
+	Transition(id, values) = new(id, values)
 end
 
 """
@@ -82,15 +64,20 @@ State structure of a machine.
 
 Fields
 - `id`: unique state identifier (a.k.a. state name);
-- `actions`: actions performed by the state;
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: the action performed when the state is deactivated;
 - `inports`: list of component input ports;
 - `outports`: list of component output ports.
 """
-struct State
+mutable struct State
     id::String
-    # actions::StateActions
     inports::Vector{Int}
     outports::Vector{Int}
+    entry::String
+    during::String
+    exit::String
+    State(id, inports, outports; en="", du="", ex="") = new(id, inports, outports, en, du, ex)
 end
 
 """

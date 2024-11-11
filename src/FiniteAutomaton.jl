@@ -1,11 +1,16 @@
 module FiniteAutomaton
 
-export Machine,
+export Machine, 
+    State, 
+    Transition, 
+    TransitionValues, 
+    Node,
 
     # core functions
-    state!, 
-    transition!, 
-    node!, 
+    add_state!, 
+    add_transition!, 
+    add_node!, 
+    add_component!, 
     get_node,
     get_transition,
     get_state

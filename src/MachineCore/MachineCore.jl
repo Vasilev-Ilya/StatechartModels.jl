@@ -1,14 +1,14 @@
 module MachineCore
 
-    export Machine, State, Transition, Node
+    export Machine, State, Transition, TransitionValues, Node
     
-    export state!, transition!, node!, get_node, get_transition, get_state
+    export add_state!, add_transition!, add_node!, add_component!, get_node, get_transition, get_state
 
     include("core_types.jl")
 
     function Base.show(io::IO, ::MIME"text/plain", transition::Transition)
-        s = transition.source
-        d = transition.destination
+        s = transition.values.source
+        d = transition.values.destination
         return print(io, "{$s, $d} transition `$(transition.id)`.")
     end
 
