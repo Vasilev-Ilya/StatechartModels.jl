@@ -4,21 +4,26 @@
 const ComponentId = Union{String, Int}
 
 """
-    TransitionValues
+    TP
 
 Contains changeable transition parameters.
 
 Fields
+- `source`: output port of the component from which the transition is directed;
+- `destination`: the input port of the component to which the transition is directed.
 - `order`: the order of execution of the transition;
 - `condition`: transition condition;
 - `action`: action performed during transition.
 """
-mutable struct TransitionValues
-	order::Int
-	condition::String
-	action::String
+mutable struct TP
+    source::Union{Nothing, ComponentId}
+    destination::ComponentId
+    order::Int
+    condition::String
+    action::String
 
-	TransitionValues(order; cond, act) = new(order, cond, act)
+    TP(d::ComponentId; order=0, cond="", act="") = new(nothing, d, order, cond, act)
+    TP(s::ComponentId, d::ComponentId; order=0, cond="", act="") = new(s, d, order, cond, act)
 end
 
 """
@@ -28,35 +33,13 @@ Connects the components of the machine
 
 Fields
 - `id`: unique component identifier;
-- `values`: changeable transition parameters;
-- `source`: output port of the component from which the transition is directed;
-- `destination`: the input port of the component to which the transition is directed.
+- `values`: changeable transition parameters.
 """
 struct Transition
 	id::Int
-	values::TransitionValues
-	source::Union{ComponentId, Nothing}
-    destination::ComponentId
+	values::TP
 
-	Transition(id, values; s, d) = new(id, values, s, d)
-end
-
-"""
-    StateActions
-
-Actions that the machine must perform.
-
-Fields
-- `entry`: action performed when a state is activated;
-- `during`: action performed when the state is active;
-- `exit`: the action performed when the state is deactivated.
-"""
-mutable struct StateActions
-    entry::String
-    during::String
-    exit::String
-
-    StateActions(; entry, during, exit) = new(entry, during, exit)
+	Transition(id, values) = new(id, values)
 end
 
 """
@@ -76,21 +59,47 @@ struct Node
 end
 
 """
+    SP
+
+State parameters.
+
+Fields
+- `id`: unique state identifier (a.k.a. state name);
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: the action performed when the state is deactivated.
+"""
+mutable struct SP
+    id::String
+    entry::String
+    during::String
+    exit::String
+
+    SP(id; en="", du="", ex="") = new(id, en, du, ex)
+end
+
+"""
     State
 
 State structure of a machine.
 
 Fields
-- `id`: unique state identifier (a.k.a. state name);
-- `actions`: actions performed by the state;
 - `inports`: list of component input ports;
-- `outports`: list of component output ports.
+- `outports`: list of component output ports;
+- `values`: changeable state parameters.
 """
-struct State
+mutable struct State
     id::String
-    # actions::StateActions
     inports::Vector{Int}
     outports::Vector{Int}
+    entry::String
+    during::String
+    exit::String
+
+    State(id, inports, outports, entry, during, exit) = new(id, inports, outports, entry, during, exit)
+    function State(inports::Vector, outports::Vector, values::SP)
+        new(values.id, inports, outports, values.entry, values.during, values.exit)
+    end
 end
 
 """

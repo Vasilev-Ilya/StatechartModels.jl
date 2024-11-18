@@ -1,14 +1,26 @@
 module FiniteAutomaton
 
-export Machine,
+export Machine, 
+    State,
+    SP,
+    Transition, 
+    TP, 
+    Node,
+    MachineComponents,
 
     # core functions
-    state!, 
-    transition!, 
-    node!, 
+    add_state!, 
+    add_states!,
+    add_transition!, 
+    add_transitions!, 
+    add_node!, 
+    add_nodes!, 
+    add_component!, 
+    add_components!, 
     get_node,
     get_transition,
-    get_state
+    get_state,
+    change_connection!
 
 include("MachineCore/MachineCore.jl")
 using .MachineCore
