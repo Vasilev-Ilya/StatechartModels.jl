@@ -15,12 +15,12 @@ Fields
 - `condition`: transition condition;
 - `action`: action performed during transition.
 """
-struct TP
+mutable struct TP
     source::Union{Nothing, ComponentId}
     destination::ComponentId
     order::Int
-    cond::String
-    act::String
+    condition::String
+    action::String
 
     TP(d::ComponentId; order=0, cond="", act="") = new(nothing, d, order, cond, act)
     TP(s::ComponentId, d::ComponentId; order=0, cond="", act="") = new(s, d, order, cond, act)
@@ -69,7 +69,7 @@ Fields
 - `during`: action performed when the state is active;
 - `exit`: the action performed when the state is deactivated.
 """
-struct SP
+mutable struct SP
     id::String
     entry::String
     during::String
@@ -84,12 +84,9 @@ end
 State structure of a machine.
 
 Fields
-- `id`: unique state identifier (a.k.a. state name);
-- `entry`: action performed when a state is activated;
-- `during`: action performed when the state is active;
-- `exit`: the action performed when the state is deactivated;
 - `inports`: list of component input ports;
-- `outports`: list of component output ports.
+- `outports`: list of component output ports;
+- `values`: changeable state parameters.
 """
 mutable struct State
     id::String
@@ -98,7 +95,11 @@ mutable struct State
     entry::String
     during::String
     exit::String
-    State(id, inports, outports; en="", du="", ex="") = new(id, inports, outports, en, du, ex)
+
+    State(id, inports, outports, entry, during, exit) = new(id, inports, outports, entry, during, exit)
+    function State(inports::Vector, outports::Vector, values::SP)
+        new(values.id, inports, outports, values.entry, values.during, values.exit)
+    end
 end
 
 """

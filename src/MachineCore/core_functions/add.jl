@@ -20,11 +20,12 @@ julia> machine
 {states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-function add_state!(machine::Machine, name::String; en::String="", du::String="", ex::String="")::State
+function add_state!(machine::Machine, p::SP)::State
     states = machine.states
+    name = p.id
     isempty(name) && error("State name must not be empty.") 
     haskey(states, name) && throw_duplicated_id(name)
-    state = State(name, Int[], Int[], en=en, du=du, ex=ex)
+    state = State(Int[], Int[], p)
     states[name] = state
     return state
 end
@@ -46,12 +47,12 @@ julia> machine
 {states: 3, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-function add_states!(machine::Machine, states::Vector{SP})
-    isempty(states) && return nothing
+function add_states!(machine::Machine, parameters::Vector{SP})
+    isempty(parameters) && return nothing
     machine_states = machine.states
-    sizehint!(machine_states, length(machine_states) + length(states))
-    for state in states
-        add_state!(machine, state.name, en=state.entry, du=state.during, ex=state.exit)
+    sizehint!(machine_states, length(machine_states) + length(parameters))
+    for p in parameters
+        add_state!(machine, p)
     end
     return nothing
 end
@@ -106,11 +107,9 @@ function add_nodes!(machine::Machine; N::Int)
 end
 
 """
-    add_transition!(machine::Machine, s::ComponentId, d::ComponentId; order::Int=0, cond::String="", act::String="")
+    add_transition!(machine::Machine, p::TP)
 
-Add transition from source `s` to destination `d` with condition `cond` and action `act` to the machine.   
-
-You can also set the execution order (`order`). If the `order` is `0`, then the execution order is last.
+Add transition to the machine.   
 
 # Examples
 ```jldoctest
@@ -120,91 +119,41 @@ julia> add_state!(machine, "A"); add_state!(machine, "B");
 
 julia> add_node!(machine); add_node!(machine);
 
-julia> add_transition!(machine, "A", "B") # transition between state `A` and state `B`
+julia> add_transition!(machine, TP("A", "B")) # transition between state `A` and state `B`
 {A, B} transition `1`.
 
-julia> add_transition!(machine, "A", 1, cond="x == 0") # transition between state `A` and node `1` with condition `x == 0`
+julia> add_transition!(machine, TP("A", 1, cond="x == 0")) # transition between state `A` and node `1` with condition `x == 0`
 {A, 1} transition `2`.
 
-julia> add_transition!(machine, 2, "B", act="x = 0") # transition between node `2` and state `B` with action `x = 0`
+julia> add_transition!(machine, TP(2, "B", act="x = 0")) # transition between node `2` and state `B` with action `x = 0`
 {2, B} transition `3`.
+
+julia> add_transition!(machine, TP("A")) # input transition to state `A`
+{nothing, A} transition `4`.
 ```
 """
-function add_transition!(
-    machine::Machine, 
-    s::ComponentId, 
-    d::ComponentId; 
-    order::Int=0, 
-    cond::String="", 
-    act::String="",
-)::Transition
+function add_transition!(machine::Machine, p::TP)::Transition
     transitions = machine.transitions
     id = length(transitions) + 1
-    if s isa String
-        state =  get_state(machine.states, s)
-        order = !iszero(order) ? order : length(state.outports) + 1
-        push!(state.outports, id)
-    else
-        node = get_node(machine.nodes, s)
-        order = !iszero(order) ? order : length(node.outports) + 1
-        push!(node.outports, id)
-    end
-    _fill_destination!(machine, id, d)
-    transition = Transition(id, TP(s, d, order=order, cond=cond, act=act))
-    transitions[id] = transition
-    return transition
-end
-
-"""
-    add_transition!(machine::Machine, d::ComponentId; order::Int=0, cond::String="", act::String="")
-
-Add input transition to component `d` with condition `cond` and action `act` to the machine.   
-
-You can also set the execution order (`order`). If the `order` is `0`, then the execution order of the transition \
-has the lowest priority in the component to which it is connected.
-
-# Examples
-```jldoctest
-julia> machine = Machine("simple_machine");
-
-julia> add_state!(machine, "A"); add_node!(machine);
-
-julia> add_transition!(machine, "A") # input transition to state `A`
-{nothing, A} transition `1`.
-
-julia> add_transition!(machine, 1, act="x = 0") # input transition to node `1` with action `x = 0`
-{nothing, 1} transition `2`.
-```
-"""
-function add_transition!(machine::Machine, d::ComponentId; order::Int=0, cond::String="", act::String="")::Transition
-    transitions = machine.transitions
-    id = length(transitions) + 1
-    _fill_destination!(machine, id, d)
-    if iszero(order)
-        order = 1
-        for (_, tra) in transitions
-            isnothing(tra.source) && (order += 1;)
+    s, d = p.source, p.destination
+    if isnothing(s)
+        if iszero(p.order)
+            p.order = 1
+            for (_, tra) in transitions
+                isnothing(tra.values.source) && (p.order += 1;)
+            end
         end
+    else
+        comp = s isa String ? get_state(machine.states, s) : get_node(machine.nodes, s)
+        push!(comp.outports, id)
+        iszero(p.order) && (p.order = length(comp.outports);)
     end
-    transition = Transition(id, TP(d, order=order, cond=cond, act=act))
+    comp = d isa String ? get_state(machine.states, d) : get_node(machine.nodes, d)
+    push!(comp.inports, id)
+
+    transition = Transition(id, p)
     transitions[id] = transition
     return transition
-end
-
-"""
-    _fill_destination!(machine::Machine, id::Int, d::ComponentId)
-
-Add connection information to the destination component in the machine.
-"""
-function _fill_destination!(machine::Machine, id::Int, d::ComponentId)
-    if d isa String
-        state = get_state(machine.states, d)
-        push!(state.inports, id)
-    else
-        node = get_node(machine.nodes, d)
-        push!(node.inports, id)
-    end
-    return nothing
 end
 
 """
@@ -226,16 +175,12 @@ julia> machine
 {states: 1, transitions: 2, nodes: 1} machine `simple_machine`.
 ```
 """
-function add_transitions!(machine::Machine, transitions::Vector{TP})
-    isempty(transitions) && return nothing
+function add_transitions!(machine::Machine, parameters::Vector{TP})
+    isempty(parameters) && return nothing
     machine_trans = machine.transitions
-    sizehint!(machine_trans, length(machine_trans) + length(transitions))
-    for tran in transitions
-        if isnothing(tran.source)
-            add_transition!(machine, tran.destination, order=tran.order, cond=tran.cond, act=tran.act)
-        else
-            add_transition!(machine, tran.source, tran.destination, order=tran.order, cond=tran.cond, act=tran.act)
-        end
+    sizehint!(machine_trans, length(machine_trans) + length(parameters))
+    for p in parameters
+        add_transition!(machine, p)
     end
     return nothing
 end
@@ -251,7 +196,7 @@ Explicitly add a component to the machine.
 ```jldoctest
 julia> machine = Machine("simple_machine");
 
-julia> add_component!(machine, State("A", [1], [2], du="x += 1"))
+julia> add_component!(machine, State([1], [2], SP("A", du="x += 1")))
 {1, 1} state `A`.
 
 julia> add_component!(machine, Node(1, [2], []))
@@ -292,7 +237,7 @@ julia> machine = Machine("simple_machine");
 julia> add_component!(
            machine, 
            [
-               State("A", [1], [], du="x += 1"), 
+               State([1], [], SP("A", du="x += 1")), 
                Node(1, [], []), 
                Transition(1, TP(nothing, "A", order=1, act="x=0")),
            ]

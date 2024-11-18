@@ -1,13 +1,13 @@
 machine = Machine("test_machine")
 
-add_state!(machine, "A", en="x += 1;"); add_component!(machine, State("B", [], [], ex="x += 1;"));
+add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], SP("B", ex="x += 1;")));
 add_node!(machine); add_component!(machine, Node(2, [], []));
-add_transition!(machine, 1)
-add_transition!(machine, 1, "A", act="x = 0")
+add_transition!(machine, TP(1))
+add_transition!(machine, TP(1, "A", act="x = 0"))
 add_component!(machine, Transition(3, TP("A", 2, order=1, cond="x == 0")))
 push!(get_state(machine, "A").outports, 3); push!(get_node(machine, 2).inports, 3);
-add_transition!(machine, 2, "B")
-add_transition!(machine, "B", "A", act="x = -1")
+add_transition!(machine, TP(2, "B"))
+add_transition!(machine, TP("B", "A", act="x = -1"))
 
 @testset "Core Functions 1" begin
     @testset "Checking the addition of components" begin
