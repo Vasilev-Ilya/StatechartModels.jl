@@ -87,3 +87,72 @@ empty!(machine)
         @test length(machine.transitions) == 5
     end
 end
+
+empty!(machine)
+
+@testset "Core Functions 3" begin
+    add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
+    add_transitions!(
+        machine,
+        [
+            TP("B"),
+            TP("A"),
+
+            TP("A", "B", act="1"),
+            TP("A", "B", act="2"),
+            TP("A", "B", act="3"),
+
+            
+            TP("B", "A", act="1"),
+            TP("B", "A", act="2"),
+        ] 
+    )
+
+    @test length(machine.transitions) == 7
+    @testset "Checking Correct Connections" begin
+        tra = get_transition(machine, 1)
+        @test test_connection(tra, nothing, "B", 1)
+        tra = get_transition(machine, 2)
+        @test test_connection(tra, nothing, "A", 2)
+
+        tra = get_transition(machine, 3)
+        @test test_connection(tra, "A", "B", 1)
+        tra = get_transition(machine, 4)
+        @test test_connection(tra, "A", "B", 2)
+        tra = get_transition(machine, 5)
+        @test test_connection(tra, "A", "B", 3)
+
+        tra = get_transition(machine, 6)
+        @test test_connection(tra, "B", "A", 1)
+        tra = get_transition(machine, 7)
+        @test test_connection(tra, "B", "A", 2)
+    end
+
+    change_connection!(machine, 1, s="A", d="B")
+    change_connection!(machine, 4, s="B", d="A")
+
+    @test length(machine.transitions) == 7
+    @testset "Checking Correct Reconnections" begin
+        tra = get_transition(machine, 2)
+        @test test_connection(tra, nothing, "A", 1)
+
+        tra = get_transition(machine, 3)
+        @test test_connection(tra, "A", "B", 1)
+        tra = get_transition(machine, 5)
+        @test test_connection(tra, "A", "B", 2)
+        tra = get_transition(machine, 1)
+        @test test_connection(tra, "A", "B", 3)
+        state_A = get_state(machine, "A")
+        @test length(state_A.outports) == 3
+        @test !(4 in state_A.outports)
+
+        tra = get_transition(machine, 6)
+        @test test_connection(tra, "B", "A", 1)
+        tra = get_transition(machine, 7)
+        @test test_connection(tra, "B", "A", 2)
+        tra = get_transition(machine, 4)
+        @test test_connection(tra, "B", "A", 3)
+        state_B = get_state(machine, "A")
+        @test length(state_B.outports) == 3
+    end
+end

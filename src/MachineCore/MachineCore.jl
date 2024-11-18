@@ -3,7 +3,7 @@ module MachineCore
     export Machine, State, Transition, Node, MachineComponents, TP, SP
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, 
         add_component!, add_components!
-    export get_node, get_transition, get_state
+    export get_node, get_transition, get_state, change_connection!
 
     include("core_types.jl")
 

@@ -19,7 +19,8 @@ export Machine,
     add_components!, 
     get_node,
     get_transition,
-    get_state
+    get_state,
+    change_connection!
 
 include("MachineCore/MachineCore.jl")
 using .MachineCore
