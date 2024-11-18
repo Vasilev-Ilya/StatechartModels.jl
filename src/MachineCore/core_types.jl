@@ -4,7 +4,7 @@
 const ComponentId = Union{String, Int}
 
 """
-    TransitionValues
+    TP
 
 Contains changeable transition parameters.
 
@@ -15,14 +15,15 @@ Fields
 - `condition`: transition condition;
 - `action`: action performed during transition.
 """
-mutable struct TransitionValues
-	source::Union{ComponentId, Nothing}
+struct TP
+    source::Union{Nothing, ComponentId}
     destination::ComponentId
-	order::Int
-	condition::String
-	action::String
+    order::Int
+    cond::String
+    act::String
 
-	TransitionValues(s, d; order, cond="", act="") = new(s, d, order, cond, act)
+    TP(d::ComponentId; order=0, cond="", act="") = new(nothing, d, order, cond, act)
+    TP(s::ComponentId, d::ComponentId; order=0, cond="", act="") = new(s, d, order, cond, act)
 end
 
 """
@@ -36,7 +37,7 @@ Fields
 """
 struct Transition
 	id::Int
-	values::TransitionValues
+	values::TP
 
 	Transition(id, values) = new(id, values)
 end
@@ -55,6 +56,26 @@ struct Node
     id::Int
     inports::Vector{Int}
     outports::Vector{Int}
+end
+
+"""
+    SP
+
+State parameters.
+
+Fields
+- `id`: unique state identifier (a.k.a. state name);
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: the action performed when the state is deactivated.
+"""
+struct SP
+    id::String
+    entry::String
+    during::String
+    exit::String
+
+    SP(id; en="", du="", ex="") = new(id, en, du, ex)
 end
 
 """

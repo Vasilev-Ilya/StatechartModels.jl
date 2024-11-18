@@ -4,12 +4,12 @@ add_state!(machine, "A", en="x += 1;"); add_component!(machine, State("B", [], [
 add_node!(machine); add_component!(machine, Node(2, [], []));
 add_transition!(machine, 1)
 add_transition!(machine, 1, "A", act="x = 0")
-add_component!(machine, Transition(3, TransitionValues("A", 2, order=1, cond="x == 0")))
+add_component!(machine, Transition(3, TP("A", 2, order=1, cond="x == 0")))
 push!(get_state(machine, "A").outports, 3); push!(get_node(machine, 2).inports, 3);
 add_transition!(machine, 2, "B")
 add_transition!(machine, "B", "A", act="x = -1")
 
-@testset "Core Functions" begin
+@testset "Core Functions 1" begin
     @testset "Checking the addition of components" begin
         @test length(machine.states) == 2
         @test length(machine.nodes) == 2
@@ -56,5 +56,34 @@ add_transition!(machine, "B", "A", act="x = -1")
             @test tra.values.condition == values[2]
             @test tra.values.action == values[3]
         end
+    end
+end
+
+empty!(machine)
+
+@testset "Core Functions 2" begin
+    @testset "Machine is empty" begin
+        @test isempty(machine.states)
+        @test isempty(machine.nodes)
+        @test isempty(machine.transitions)
+    end
+
+    add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
+    add_nodes!(machine, N=2)
+    add_transitions!(
+        machine,
+        [
+            TP(1),
+            TP(1, "A", act="x = 0"),
+            TP("A", 2, cond="x == 0"),
+            TP(2, "B"),
+            TP("B", "A", cond="x == 0", act="x = -1"),
+        ] 
+    )
+
+    @testset "Checking the addition of components" begin
+        @test length(machine.states) == 2
+        @test length(machine.nodes) == 2
+        @test length(machine.transitions) == 5
     end
 end

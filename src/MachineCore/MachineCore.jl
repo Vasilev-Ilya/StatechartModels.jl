@@ -1,10 +1,13 @@
 module MachineCore
 
-    export Machine, State, Transition, TransitionValues, Node
-    
-    export add_state!, add_transition!, add_node!, add_component!, get_node, get_transition, get_state
+    export Machine, State, Transition, Node, MachineComponents, TP, SP
+    export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, 
+        add_component!, add_components!
+    export get_node, get_transition, get_state
 
     include("core_types.jl")
+
+    const MachineComponents = Union{State, Node, Transition}
 
     function Base.show(io::IO, ::MIME"text/plain", transition::Transition)
         s = transition.values.source
@@ -32,5 +35,5 @@ module MachineCore
     end
 
     include("common_erros.jl")
-    include("core_functions.jl")
+    include("core_functions/core_functions.jl")
 end # module

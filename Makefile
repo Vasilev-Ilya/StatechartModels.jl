@@ -1,2 +1,2 @@
 tests: 
-	julia --project -e 'using Pkg; Pkg.test()'
+	julia --project -e 'import Pkg; Pkg.test()'
