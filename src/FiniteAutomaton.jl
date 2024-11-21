@@ -6,7 +6,11 @@ export Machine,
     Transition, 
     TP, 
     Node,
-    MachineComponents,
+    MachineComponents, 
+    StateCollection, 
+    NodeCollection, 
+    TransitionCollection, 
+    MachineCollection,
 
     # core functions
     add_state!, 

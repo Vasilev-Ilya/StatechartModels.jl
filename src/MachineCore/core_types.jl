@@ -2,6 +2,7 @@
 # Core structures for creating a finite state machine
 #
 const ComponentId = Union{String, Int}
+abs
 
 """
     TP
@@ -102,6 +103,12 @@ mutable struct State
     end
 end
 
+const MachineComponents = Union{State, Node, Transition}
+const StateCollection = Dict{String, State}
+const NodeCollection = Dict{Int, Node}
+const TransitionCollection = Dict{Int, Transition}
+const MachineCollection = Union{StateCollection, NodeCollection, TransitionCollection}
+
 """
     Data
 
@@ -131,9 +138,9 @@ julia> machine = Machine("simple_machine")
 """
 struct Machine
     name::String   
-    states::Dict{String, State}
-    nodes::Dict{Int, Node}
-    transitions::Dict{Int, Transition}
+    states::StateCollection
+    nodes::NodeCollection
+    transitions::TransitionCollection
     data::Vector{Data}
 
     Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, Transition}(), Data[])

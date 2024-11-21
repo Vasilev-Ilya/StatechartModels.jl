@@ -19,8 +19,6 @@ function Base.delete!(v::Vector, target_elem)
     return nothing
 end
 
-_get_node_or_state(machine::Machine, id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
-
 """
     change_connection!(machine::Machine, id::Int; s::Union{Nothing, ComponentId}, d::ComponentId)
 
@@ -41,8 +39,7 @@ julia> change_connection!(machine, 1, s="B", d="A")
 """
 function change_connection!(machine::Machine, id::Int; s::Union{Nothing, ComponentId}, d::ComponentId)::Transition
     transitions = machine.transitions
-    transition::Union{Nothing, Transition} = get(transitions, id, nothing)
-    isnothing(transition) && throw_no_transition(id)
+    transition = get_machine_component(transitions, id)
     
     old_s = transition.values.source
     old_d = transition.values.destination

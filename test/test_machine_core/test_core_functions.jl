@@ -17,7 +17,7 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
     end
 
     @testset "Components `get` operation checking" begin
-        state_A = get_state(machine.states, "A")
+        state_A = get_state(machine, "A")
         state_B = get_state(machine, "B")
         test_states = [(state_A, "A", ([2, 5], [3]), ("x += 1;", "", "")), (state_B, "B", ([4], [5]), ("", "", "x += 1;"))]
         for (state, name, ports, actions) in test_states
@@ -29,7 +29,7 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
             @test state.exit == actions[3]
         end
 
-        node_1 = get_node(machine.nodes, 1)
+        node_1 = get_node(machine, 1)
         node_2 = get_node(machine, 2)
         test_nodes = [(node_1, 1, ([1], [2])), (node_2, 2, ([3], [4]))]
         for (node, id, ports) in test_nodes
@@ -38,8 +38,8 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
             @test node.outports == ports[2]
         end
 
-        tra_1 = get_transition(machine.transitions, 1)
-        tra_2 = get_transition(machine.transitions, 2)
+        tra_1 = get_transition(machine, 1)
+        tra_2 = get_transition(machine, 2)
         tra_3 = get_transition(machine, 3)
         tra_4 = get_transition(machine, 4)
         tra_5 = get_transition(machine, 5)
