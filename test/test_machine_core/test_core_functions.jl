@@ -155,4 +155,21 @@ empty!(machine)
         state_B = get_state(machine, "A")
         @test length(state_B.outports) == 3
     end
+
+    add_states!(machine, [SP("C"), SP("D")])
+    rm_states!(machine, ["A", "C"])
+    add_nodes!(machine, N=3)
+    add_transition!(machine, TP(1, 2))
+    rm_node!(machine, 1)
+    rm_transition!(machine, 8)
+    rm_nodes!(machine, [2])
+    rm_transitions!(machine, [1, 2, 3, 4, 5, 6, 7])
+    rm_state!(machine, "B")
+    @testset "Checking Removing Connections" begin
+        @test length(machine.states) == 1
+        @test get_state(machine, "D").id == "D"
+        @test length(machine.nodes) == 1
+        @test get_node(machine, 3).id == 3
+        @test isempty(machine.transitions)
+    end
 end

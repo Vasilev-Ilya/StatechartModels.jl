@@ -18,7 +18,7 @@ Fields
 """
 mutable struct TP
     source::Union{Nothing, ComponentId}
-    destination::ComponentId
+    destination::Union{Nothing, ComponentId}
     order::Int
     condition::String
     action::String

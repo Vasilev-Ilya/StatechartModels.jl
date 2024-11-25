@@ -61,9 +61,16 @@ function change_connection!(machine::Machine, id::Int; s::Union{Nothing, Compone
                 tra.values.order -= 1
             end
             delete!(comp_outputs, id)
-            comp_outputs = _get_node_or_state(machine, s).outports
-            push!(comp_outputs, id)
-            order = length(comp_outputs)
+            if isnothing(s)
+                order = 1
+                for (_, tra) in transitions
+                    isnothing(tra.values.source) && (order += 1;)
+                end
+            else
+                comp_outputs = _get_node_or_state(machine, s).outports
+                push!(comp_outputs, id)
+                order = length(comp_outputs)
+            end
         end
         transition.values.order = order
         transition.values.source = s
@@ -81,3 +88,4 @@ end
 
 include("add.jl")
 include("get.jl")
+include("remove.jl")
