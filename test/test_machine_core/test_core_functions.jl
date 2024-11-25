@@ -1,7 +1,7 @@
 machine = Machine("test_machine")
 
-add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], SP("B", ex="x += 1;")));
-add_node!(machine); add_component!(machine, Node(2, [], []));
+add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], [], SP("B", ex="x += 1;")));
+add_node!(machine); add_component!(machine, Node(2, NP(), [], []));
 add_transition!(machine, TP(1))
 add_transition!(machine, TP(1, "A", act="x = 0"))
 add_component!(machine, Transition(3, TP("A", 2, order=1, cond="x == 0")))
@@ -69,7 +69,7 @@ empty!(machine)
     end
 
     add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
-    add_nodes!(machine, N=2)
+    add_nodes!(machine, [NP(), NP()])
     add_transitions!(
         machine,
         [
@@ -158,7 +158,7 @@ empty!(machine)
 
     add_states!(machine, [SP("C"), SP("D")])
     rm_states!(machine, ["A", "C"])
-    add_nodes!(machine, N=3)
+    add_nodes!(machine, [NP(), NP(), NP()])
     add_transition!(machine, TP(1, 2))
     rm_node!(machine, 1)
     rm_transition!(machine, 8)

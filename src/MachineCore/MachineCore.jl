@@ -1,7 +1,7 @@
 module MachineCore
 
     export Machine, State, Transition, Node, MachineComponents, StateCollection, NodeCollection, TransitionCollection, 
-        MachineCollection, TP, SP
+        MachineCollection, TP, NP, SP
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!
     export get_machine_component, get_node, get_transition, get_state, change_connection!
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!
@@ -17,13 +17,13 @@ module MachineCore
     function Base.show(io::IO, ::MIME"text/plain", state::State)
         n_i = length(state.inports)
         n_o = length(state.outports)
-        return print(io, "{$n_i, $n_o} state `$(state.id)`.")
+        return print(io, "{$n_i, $n_o} state `$(state.id)` with parent `$(state.parent_id)`.")
     end
 
     function Base.show(io::IO, ::MIME"text/plain", node::Node)
         n_i = length(node.inports)
         n_o = length(node.outports)
-        return print(io, "{$n_i, $n_o} node `$(node.id)`.")
+        return print(io, "{$n_i, $n_o} node `$(node.id)` with parent `$(node.values.parent_id)`.")
     end
 
     function Base.show(io::IO, ::MIME"text/plain", machine::Machine)
