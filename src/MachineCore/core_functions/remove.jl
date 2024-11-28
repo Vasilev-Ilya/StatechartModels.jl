@@ -21,7 +21,26 @@ julia> machine
 {states: 0, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-function rm_state! end
+function rm_state!(machine::Machine, id::String)::Bool
+    states = machine.states
+    haskey(states, id) || return false
+    state = states[id]
+    transitions = machine.transitions
+    for tra_id in state.inports
+        transitions[tra_id].values.destination = nothing
+    end
+    for tra_id in state.outports
+        transition = transitions[tra_id]
+        transition.values.order = 1
+        for (_, tra) in transitions
+            isnothing(tra.values.source) && (transition.values.order += 1;)
+        end
+        transition.values.source = nothing
+    end
+    isempty(state.parent_id) || delete!(states[state.parent_id].substates, id)
+    delete!(states, id)
+    return true
+end
 
 """
     rm_node!(machine::Machine, id::Int)
@@ -42,30 +61,24 @@ julia> machine
 {states: 0, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-function rm_node! end
-
-for (fname, field_name, arg_type) in [(:rm_state!, :states, :String), (:rm_node!, :nodes, :Int)]
-    @eval begin
-        function $fname(machine::Machine, id::$arg_type)::Bool
-            components = machine.$field_name
-            haskey(components, id) || return false
-            component = components[id]
-            transitions = machine.transitions
-            for tra_id in component.inports
-                transitions[tra_id].values.destination = nothing
-            end
-            for tra_id in component.outports
-                transition = transitions[tra_id]
-                transition.values.order = 1
-                for (_, tra) in transitions
-                    isnothing(tra.values.source) && (transition.values.order += 1;)
-                end
-                transition.values.source = nothing
-            end
-            delete!(components, id)
-            return true
-        end
+function rm_node!(machine::Machine, id::Int)::Bool
+    nodes = machine.nodes
+    haskey(nodes, id) || return false
+    node = nodes[id]
+    transitions = machine.transitions
+    for tra_id in node.inports
+        transitions[tra_id].values.destination = nothing
     end
+    for tra_id in node.outports
+        transition = transitions[tra_id]
+        transition.values.order = 1
+        for (_, tra) in transitions
+            isnothing(tra.values.source) && (transition.values.order += 1;)
+        end
+        transition.values.source = nothing
+    end
+    delete!(nodes, id)
+    return true
 end
 
 """

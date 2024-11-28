@@ -11,11 +11,9 @@ function Base.empty!(machine::Machine; rm_data::Bool=false)
 end
 
 function Base.delete!(v::Vector, target_elem)
-    index = 0
     for (i, elem) in enumerate(v)
-        target_elem == elem && (index = i; break;)
+        target_elem == elem && (deleteat!(v, i); break;)
     end
-    deleteat!(v, index)
     return nothing
 end
 

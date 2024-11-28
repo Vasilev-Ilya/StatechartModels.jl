@@ -29,7 +29,10 @@ function add_state!(machine::Machine, p::SP)::State
     haskey(states, name) && throw_duplicated_id(name)
     
     parent_name = p.parent_id
-    (!isempty(parent_name) && !haskey(states, parent_name)) && throw_no_component(Val(State), parent_name)
+    if !isempty(parent_name)
+        haskey(states, parent_name) || throw_no_component(Val(State), parent_name)
+        push!(states[parent_name].substates, name)
+    end
     
     state = State(String[], Int[], Int[], p)
     states[name] = state
