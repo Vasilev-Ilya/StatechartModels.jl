@@ -1,7 +1,7 @@
 machine = Machine("test_machine")
 
-add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], SP("B", ex="x += 1;")));
-add_node!(machine); add_component!(machine, Node(2, [], []));
+add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], [], SP("B", ex="x += 1;")));
+add_node!(machine); add_component!(machine, Node(2, NP(), [], []));
 add_transition!(machine, TP(1))
 add_transition!(machine, TP(1, "A", act="x = 0"))
 add_component!(machine, Transition(3, TP("A", 2, order=1, cond="x == 0")))
@@ -17,7 +17,7 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
     end
 
     @testset "Components `get` operation checking" begin
-        state_A = get_state(machine.states, "A")
+        state_A = get_state(machine, "A")
         state_B = get_state(machine, "B")
         test_states = [(state_A, "A", ([2, 5], [3]), ("x += 1;", "", "")), (state_B, "B", ([4], [5]), ("", "", "x += 1;"))]
         for (state, name, ports, actions) in test_states
@@ -29,7 +29,7 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
             @test state.exit == actions[3]
         end
 
-        node_1 = get_node(machine.nodes, 1)
+        node_1 = get_node(machine, 1)
         node_2 = get_node(machine, 2)
         test_nodes = [(node_1, 1, ([1], [2])), (node_2, 2, ([3], [4]))]
         for (node, id, ports) in test_nodes
@@ -38,8 +38,8 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
             @test node.outports == ports[2]
         end
 
-        tra_1 = get_transition(machine.transitions, 1)
-        tra_2 = get_transition(machine.transitions, 2)
+        tra_1 = get_transition(machine, 1)
+        tra_2 = get_transition(machine, 2)
         tra_3 = get_transition(machine, 3)
         tra_4 = get_transition(machine, 4)
         tra_5 = get_transition(machine, 5)
@@ -69,7 +69,7 @@ empty!(machine)
     end
 
     add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
-    add_nodes!(machine, N=2)
+    add_nodes!(machine, [NP(), NP()])
     add_transitions!(
         machine,
         [
@@ -154,5 +154,22 @@ empty!(machine)
         @test test_connection(tra, "B", "A", 3)
         state_B = get_state(machine, "A")
         @test length(state_B.outports) == 3
+    end
+
+    add_states!(machine, [SP("C"), SP("D")])
+    rm_states!(machine, ["A", "C"])
+    add_nodes!(machine, [NP(), NP(), NP()])
+    add_transition!(machine, TP(1, 2))
+    rm_node!(machine, 1)
+    rm_transition!(machine, 8)
+    rm_nodes!(machine, [2])
+    rm_transitions!(machine, [1, 2, 3, 4, 5, 6, 7])
+    rm_state!(machine, "B")
+    @testset "Checking Removing Connections" begin
+        @test length(machine.states) == 1
+        @test get_state(machine, "D").id == "D"
+        @test length(machine.nodes) == 1
+        @test get_node(machine, 3).id == 3
+        @test isempty(machine.transitions)
     end
 end

@@ -6,7 +6,12 @@ export Machine,
     Transition, 
     TP, 
     Node,
-    MachineComponents,
+    NP,
+    MachineComponents, 
+    StateCollection, 
+    NodeCollection, 
+    TransitionCollection, 
+    MachineCollection,
 
     # core functions
     add_state!, 
@@ -17,10 +22,17 @@ export Machine,
     add_nodes!, 
     add_component!, 
     add_components!, 
+    get_machine_component, 
     get_node,
     get_transition,
     get_state,
-    change_connection!
+    change_connection!,
+    rm_state!, 
+    rm_states!, 
+    rm_node!, 
+    rm_nodes!, 
+    rm_transition!,
+    rm_transitions!
 
 include("MachineCore/MachineCore.jl")
 using .MachineCore

@@ -17,7 +17,7 @@ Fields
 """
 mutable struct TP
     source::Union{Nothing, ComponentId}
-    destination::ComponentId
+    destination::Union{Nothing, ComponentId}
     order::Int
     condition::String
     action::String
@@ -43,17 +43,33 @@ struct Transition
 end
 
 """
+    NP
+
+Contains changeable node parameters.
+
+Fields
+- `parent_id`: unique parent state identifier.
+"""
+mutable struct NP
+    parent_id::String
+
+    NP(; parent::String="") = new(parent)
+end
+
+"""
     Node
 
 Auxiliary component.
 
 Fields
 - `id`: node unique identifier;
+- `values`: changeable node parameters;
 - `inports`: list of component input ports;
 - `outports`: list of component output ports.
 """
 struct Node
     id::Int
+    values::NP
     inports::Vector{Int}
     outports::Vector{Int}
 end
@@ -65,17 +81,19 @@ State parameters.
 
 Fields
 - `id`: unique state identifier (a.k.a. state name);
+- `parent_id`: unique parent state identifier;
 - `entry`: action performed when a state is activated;
 - `during`: action performed when the state is active;
 - `exit`: the action performed when the state is deactivated.
 """
 mutable struct SP
     id::String
+    parent_id::String
     entry::String
     during::String
     exit::String
 
-    SP(id; en="", du="", ex="") = new(id, en, du, ex)
+    SP(id; parent="", en="", du="", ex="") = new(id, parent, en, du, ex)
 end
 
 """
@@ -84,23 +102,37 @@ end
 State structure of a machine.
 
 Fields
+- `id`: unique state identifier (a.k.a. state name);
+- `parent_id`: unique parent state identifier;
+- `substates`: list of substates;
 - `inports`: list of component input ports;
 - `outports`: list of component output ports;
-- `values`: changeable state parameters.
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: the action performed when the state is deactivated.
 """
 mutable struct State
     id::String
+    parent_id::String
+    substates::Vector{String}
     inports::Vector{Int}
     outports::Vector{Int}
     entry::String
     during::String
     exit::String
 
-    State(id, inports, outports, entry, during, exit) = new(id, inports, outports, entry, during, exit)
-    function State(inports::Vector, outports::Vector, values::SP)
-        new(values.id, inports, outports, values.entry, values.during, values.exit)
+    State(id, parent_id, substates, inports, outports, entry, during, exit) = 
+        new(id, parent_id, substates, inports, outports, entry, during, exit)
+    function State(substates::Vector, inports::Vector, outports::Vector, values::SP)
+        new(values.id, values.parent_id, substates, inports, outports, values.entry, values.during, values.exit)
     end
 end
+
+const MachineComponents = Union{State, Node, Transition}
+const StateCollection = Dict{String, State}
+const NodeCollection = Dict{Int, Node}
+const TransitionCollection = Dict{Int, Transition}
+const MachineCollection = Union{StateCollection, NodeCollection, TransitionCollection}
 
 """
     Data
@@ -131,9 +163,9 @@ julia> machine = Machine("simple_machine")
 """
 struct Machine
     name::String   
-    states::Dict{String, State}
-    nodes::Dict{Int, Node}
-    transitions::Dict{Int, Transition}
+    states::StateCollection
+    nodes::NodeCollection
+    transitions::TransitionCollection
     data::Vector{Data}
 
     Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, Transition}(), Data[])

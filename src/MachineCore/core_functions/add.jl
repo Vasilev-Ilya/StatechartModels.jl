@@ -3,107 +3,70 @@
 #
 
 """
-    add_state!(machine::Machine, name::String; en::String="", du::String="", ex::String="")
+    add_state!(machine::Machine, p::SP)
 
-Add state with name `name` to the machine.   
-
-Additionally, you can assign the state-actions: entry (`en`), during (`du`) and exit (`ex`).
+Add state with name `name` with parameters `p` (see `SP` struct for info) to the machine. 
 
 # Examples
 ```jldoctest
 julia> machine = Machine("simple_machine");
 
-julia> add_state!(machine, "A")
-{0, 0} state `A`.
+julia> add_state!(machine, SP("A"))
+{0, 0} state `A` with parent ``.
+
+julia> add_state!(machine, SP("B", parent="A"))
+{0, 0} state `B` with parent `A`.
 
 julia> machine
-{states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
+{states: 2, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
 function add_state!(machine::Machine, p::SP)::State
     states = machine.states
+    
     name = p.id
     isempty(name) && error("State name must not be empty.") 
     haskey(states, name) && throw_duplicated_id(name)
-    state = State(Int[], Int[], p)
+    
+    parent_name = p.parent_id
+    if !isempty(parent_name)
+        haskey(states, parent_name) || throw_no_component(Val(State), parent_name)
+        push!(states[parent_name].substates, name)
+    end
+    
+    state = State(String[], Int[], Int[], p)
     states[name] = state
     return state
 end
 
 """
-    add_states!(machine::Machine, states::Vector{SP})
+    add_node!(machine::Machine, p::NP=NP())
 
-Adds multiple states to the machine.   
-
-The states to be added are stored in a vector. Each element of the vector is a `SP` struct.   
-
-# Examples
-```jldoctest
-julia> machine = Machine("simple_machine");
-
-julia> add_states!(machine, [SP("A", en="x=0"), SP("B", du="x=1"), SP("C", ex="x=3")])
-
-julia> machine
-{states: 3, transitions: 0, nodes: 0} machine `simple_machine`.
-```
-"""
-function add_states!(machine::Machine, parameters::Vector{SP})
-    isempty(parameters) && return nothing
-    machine_states = machine.states
-    sizehint!(machine_states, length(machine_states) + length(parameters))
-    for p in parameters
-        add_state!(machine, p)
-    end
-    return nothing
-end
-
-"""
-    add_node!(machine::Machine)
-
-Add node to the machine.
+Add node with parameters `p` (see `NP` struct for info) to the machine.
 
 # Examples
 ```jldoctest
 julia> machine = Machine("simple_machine");
 
 julia> add_node!(machine)
-{0, 0} node `1`.
+{0, 0} node `1` with parent ``.
+
+julia> add_state!(machine, SP("A")); add_node!(machine, NP(parent="A"))
+{0, 0} node `2` with parent `A`.
 
 julia> machine
-{states: 0, transitions: 0, nodes: 1} machine `simple_machine`.
+{states: 1, transitions: 0, nodes: 2} machine `simple_machine`.
 ```
 """
-function add_node!(machine::Machine)::Node
+function add_node!(machine::Machine, p::NP=NP())::Node
     nodes = machine.nodes
+
+    parent_id = p.parent_id
+    (!isempty(parent_id) && !haskey(nodes, parent_id)) && throw_no_component(Val(Node), parent_id)
     id = length(nodes) + 1
-    node = Node(id, Int[], Int[])
+    node = Node(id, p, Int[], Int[])
     nodes[id] = node
     return node
-end
-
-"""
-    add_nodes!(machine::Machine, N::Int)
-
-Adds multiple nodes to the machine. 
-
-# Examples
-```jldoctest
-julia> machine = Machine("simple_machine");
-
-julia> add_nodes!(machine, N=4)
-
-julia> machine
-{states: 0, transitions: 0, nodes: 4} machine `simple_machine`.
-```
-"""
-function add_nodes!(machine::Machine; N::Int)
-    N < 1 && return nothing
-    machine_nodes = machine.nodes
-    sizehint!(machine_nodes, length(machine_nodes) + N)
-    for _=1:N
-        add_node!(machine)
-    end
-    return nothing
 end
 
 """
@@ -157,7 +120,45 @@ function add_transition!(machine::Machine, p::TP)::Transition
 end
 
 """
-    add_transitions!(machine::Machine, transitions::Vector{TP})
+    add_states!(machine::Machine, parameters::Vector{SP})
+
+Adds multiple states to the machine.   
+
+The states to be added are stored in a vector. Each element of the vector is a `SP` struct.   
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> add_states!(machine, [SP("A", en="x=0"), SP("B", du="x=1"), SP("C", ex="x=3")])
+
+julia> machine
+{states: 3, transitions: 0, nodes: 0} machine `simple_machine`.
+```
+"""
+function add_states! end
+
+"""
+    add_nodes!(machine::Machine, parameters::Vector{NP})
+
+Adds multiple nodes to the machine. 
+
+The nodes to be added are stored in a vector. Each element of the vector is a `NP` struct.   
+
+# Examples
+```jldoctest
+julia> machine = Machine("simple_machine");
+
+julia> add_nodes!(machine, [NP(), NP()])
+
+julia> machine
+{states: 0, transitions: 0, nodes: 2} machine `simple_machine`.
+```
+"""
+function add_nodes! end
+
+"""
+    add_transitions!(machine::Machine, parameters::Vector{TP})
 
 Adds multiple transitions to the machine.   
 
@@ -175,14 +176,25 @@ julia> machine
 {states: 1, transitions: 2, nodes: 1} machine `simple_machine`.
 ```
 """
-function add_transitions!(machine::Machine, parameters::Vector{TP})
-    isempty(parameters) && return nothing
-    machine_trans = machine.transitions
-    sizehint!(machine_trans, length(machine_trans) + length(parameters))
-    for p in parameters
-        add_transition!(machine, p)
+function add_transitions! end
+
+
+for (func_name, subfunc_name, field_name, p_type) in [
+    (:add_states!, :add_state!, :states, :SP),
+    (:add_nodes!, :add_node!, :nodes, :NP),
+    (:add_transitions!, :add_transition!, :transitions, :TP),
+]
+    @eval begin
+        function $func_name(machine::Machine, parameters::Vector{$p_type})
+            isempty(parameters) && return nothing
+            components = machine.$field_name
+            sizehint!(components, length(components) + length(parameters))
+            for p in parameters
+                $subfunc_name(machine, p)
+            end
+            return nothing
+        end
     end
-    return nothing
 end
 
 """
@@ -211,7 +223,7 @@ julia> add_transition!(machine, Transition(2, TP("A", 1, order=1))) # transition
 """
 function add_component! end
 
-for (field_name, comp_type) in ((:states, :State), (:nodes, :Node), (:transitions, :Transition))
+for (field_name, comp_type) in [(:states, :State), (:nodes, :Node), (:transitions, :Transition)]
     @eval begin
         function add_component!(machine::Machine, component::$comp_type)::$comp_type
             components = machine.$field_name
