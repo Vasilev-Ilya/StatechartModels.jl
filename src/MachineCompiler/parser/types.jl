@@ -1,4 +1,23 @@
 #
+# UTILITY TYPES
+#
+
+struct ExitStateInfo
+    cst_tail::CST
+    source_names_hierarchy::Vector{String}
+    source_name::String
+    target_name::Union{Nothing, String}
+    eldest_parent_index::Union{Nothing, Int}
+    direction_out::Bool
+end
+
+mutable struct InitializationInfo
+    cst_tail::CST
+    parent_name::String
+    first_entrance::Bool
+end
+
+#
 # ----- CST TYPES ---
 #
 
