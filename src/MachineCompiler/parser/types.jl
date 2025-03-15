@@ -3,7 +3,7 @@
 #
 
 struct ExitStateInfo
-    cst_tail::CST
+    tail::ParseTree
     source_names_hierarchy::Vector{String}
     source_name::String
     target_name::Union{Nothing, String}
@@ -12,51 +12,56 @@ struct ExitStateInfo
 end
 
 mutable struct InitializationInfo
-    cst_tail::CST
+    tail::ParseTree
     parent_name::String
     first_entrance::Bool
 end
 
 #
-# ----- CST TYPES ---
+# ----- ParseTree TYPES ---
 #
 
-abstract type CST end
+abstract type ParseTree end
 
 struct RefMachineCompInfo
     type::Symbol
     id::Union{Int, String}
 end
 
-struct CONDITION <: CST
-    next::CST
+struct CONDITION <: ParseTree
+    next::ParseTree
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
     value::String
 end
 
-struct ACTION <: CST
-    next::CST
+struct ACTION <: ParseTree
+    next::ParseTree
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
     value::String
 end
 
-struct FORK <: CST
-    next::Vector{CST}
+struct FORK <: ParseTree
+    next::Vector{ParseTree}
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
+    
+    FORK(next::Vector{ParseTree}) = new(next, nothing)
+    FORK(next::Vector{ParseTree}; id::Union{Int, String}, type::Symbol) = new(next, RefMachineCompInfo(type, id))
 end
 
 struct LEAF
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
-    final::Bool
-    return_values::Bool
+    out_values::Union{Nothing, Vector{String}}
+
+    LEAF(; out_values::Union{Nothing, Vector{String}}=nothing) = new(nothing, out_values)
+    LEAF(; id::Union{Int, String}, type::Symbol, out_values::Union{Nothing, Vector{String}}=nothing) = new(RefMachineCompInfo(type, id), out_values)
 end
 
 struct FUNCTION_CALL
-    next::CST
+    next::ParseTree
     value::String
 end
 
 struct MACHINE_FUNCTION
-    body::CST
+    body::ParseTree
     head::String
 end

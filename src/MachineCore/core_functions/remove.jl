@@ -108,7 +108,7 @@ function rm_transition!(machine::Machine, id::Int)::Bool
     tra = transitions[id]
     s = tra.values.source
     if !isnothing(s)
-        comp_ports = _get_node_or_state(machine, s).outports
+        comp_ports = get_node_or_state(machine, s).outports
         for tra_id in comp_ports
             comp_tra = transitions[tra_id]
             comp_tra.values.order > tra.values.order || continue
@@ -119,7 +119,7 @@ function rm_transition!(machine::Machine, id::Int)::Bool
 
     d = tra.values.destination
     if !isnothing(d)
-        comp_ports = _get_node_or_state(machine, d).inports
+        comp_ports = get_node_or_state(machine, d).inports
         delete!(comp_ports, id)
     end
 

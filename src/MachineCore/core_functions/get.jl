@@ -98,4 +98,6 @@ for (fname, field_name, arg_type) in [(:get_state, :states, :String), (:get_node
     end
 end
 
-_get_node_or_state(machine::Machine, id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
+get_node_or_state(machine::Machine, id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
+
+get_out_transitions(machine::Machine, comp::Union{State, Node}) = [get_transition(machine, output_id) for output_id in comp.outports]

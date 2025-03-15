@@ -107,11 +107,11 @@ function add_transition!(machine::Machine, p::TP)::Transition
             end
         end
     else
-        comp = _get_node_or_state(machine, s)
+        comp = get_node_or_state(machine, s)
         push!(comp.outports, id)
         iszero(p.order) && (p.order = length(comp.outports);)
     end
-    comp = _get_node_or_state(machine, d)
+    comp = get_node_or_state(machine, d)
     push!(comp.inports, id)
 
     transition = Transition(id, p)
