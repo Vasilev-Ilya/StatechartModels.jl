@@ -1,4 +1,4 @@
-module MachineCore
+module MachineAPI
 
     export Machine, State, Transition, Node, MachineComponents, StateCollection, NodeCollection, TransitionCollection, 
         MachineCollection, TP, NP, SP
@@ -6,7 +6,7 @@ module MachineCore
     export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, change_connection!
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!
 
-    include("core_types.jl")
+    include("api_types.jl")
 
     function Base.show(io::IO, ::MIME"text/plain", transition::Transition)
         s = transition.values.source
@@ -34,5 +34,5 @@ module MachineCore
     end
 
     include("common_erros.jl")
-    include("core_functions/core_functions.jl")
+    include("api_functions/api_functions.jl")
 end # module

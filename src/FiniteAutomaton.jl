@@ -13,7 +13,7 @@ export Machine,
     TransitionCollection, 
     MachineCollection,
 
-    # core functions
+    # API functions
     add_state!, 
     add_states!,
     add_transition!, 
@@ -34,6 +34,6 @@ export Machine,
     rm_transition!,
     rm_transitions!
 
-include("MachineCore/MachineCore.jl")
-using .MachineCore
+include("MachineAPI/MachineAPI.jl")
+using .MachineAPI
 end # module FiniteAutomaton

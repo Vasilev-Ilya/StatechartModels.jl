@@ -1,4 +1,4 @@
 using FiniteAutomaton
 using Test
 
-include("test_machine_core/test_machine_core.jl")
+include("test_machine_api/test_machine_api.jl")
