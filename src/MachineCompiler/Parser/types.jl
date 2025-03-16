@@ -52,6 +52,8 @@ struct FORK <: ParseTree
     
     FORK(next::Vector{ParseTree}) = new(next, nothing)
     FORK(next::Vector{ParseTree}; id::Union{Int, String}, type::Symbol) = new(next, RefMachineCompInfo(type, id))
+    FORK(next::ParseTree) = new(ParseTree[next], nothing)
+    FORK(next::ParseTree; id::Union{Int, String}, type::Symbol) = new(ParseTree[next], RefMachineCompInfo(type, id))
 end
 
 struct LEAF
