@@ -38,7 +38,8 @@ function parse_transition!(
     transition::Transition;
     initialization_info::InitializationInfo,
 )::ParseTree
-    comp = get_node_or_state(machine, transition.values.destination)
+    (; destination, action, condition) = transition.values
+    comp = get_node_or_state(machine, destination)
     if comp isa State
         next = parse_state!(machine, comp, initialization_info=initialization_info)
     else
@@ -47,6 +48,10 @@ function parse_transition!(
         else
             next = FORK(ParseTree[initialization_info.tail, LEAF(id=comp.id, type=:node)])
         end
+    end
+    next = ACTION(next, id=transition.id, type=:transition, value=action)
+    if !is_only_spaces(condition)
+        next = CONDITION(next, id=transition.id, type=:transition, value=condition)
     end
     return next
 end

@@ -32,12 +32,18 @@ struct CONDITION <: ParseTree
     next::ParseTree
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
     value::String
+
+    CONDITION(next::ParseTree; value::String="") = new(next, nothing, value)
+    CONDITION(next::ParseTree; id::Union{Int, String}, type::Symbol, value::String="") = new(next, RefMachineCompInfo(type, id), value)
 end
 
 struct ACTION <: ParseTree
     next::ParseTree
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
     value::String
+
+    ACTION(next::ParseTree; value::String="") = new(next, nothing, value)
+    ACTION(next::ParseTree; id::Union{Int, String}, type::Symbol, value::String="") = new(next, RefMachineCompInfo(type, id), value)
 end
 
 struct FORK <: ParseTree
