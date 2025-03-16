@@ -36,4 +36,6 @@ export Machine,
 
 include("MachineAPI/MachineAPI.jl")
 using .MachineAPI
+include("MachineCompiler/MachineCompiler.jl")
+using .MachineCompiler
 end # module FiniteAutomaton

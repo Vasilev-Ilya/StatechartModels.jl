@@ -1,7 +1,9 @@
 module MachineCompiler
 
-    include("code_generator/code_genetator.jl")
-    include("parser/parser.jl")
-    include("validator/validator.jl")
-
+    include("Validator/Validator.jl")
+    using .Validator
+    include("Parser/Parser.jl")
+    using .Parser
+    include("CodeGenerator/CodeGenerator.jl")
+    using .CodeGenerator
 end # module
