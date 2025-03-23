@@ -2,16 +2,13 @@ module FiniteAutomaton
 
 export Machine, 
     State,
-    SP,
+    StateParameters,
     Transition, 
-    TP, 
+    TransitionParameters, 
     Node,
-    NP,
+    NodeParameters,
     MachineComponents, 
-    StateCollection, 
-    NodeCollection, 
-    TransitionCollection, 
-    MachineCollection,
+    MachineComponentsDicts,
 
     # API functions
     add_state!, 

@@ -1,13 +1,13 @@
-machine = Machine("test_machine")
+machine = Machine(name="test_machine")
 
-add_state!(machine, SP("A", en="x += 1;")); add_component!(machine, State([], [], [], SP("B", ex="x += 1;")));
-add_node!(machine); add_component!(machine, Node(2, NP(), [], []));
-add_transition!(machine, TP(1))
-add_transition!(machine, TP(1, "A", act="x = 0"))
-add_component!(machine, Transition(3, TP("A", 2, order=1, cond="x == 0")))
+add_state!(machine, StateParameters("A", en="x += 1;")); add_component!(machine, State([], [], [], StateParameters("B", ex="x += 1;")));
+add_node!(machine); add_component!(machine, Node(2, NodeParameters(), [], []));
+add_transition!(machine, TransitionParameters(1))
+add_transition!(machine, TransitionParameters(1, "A", act="x = 0"))
+add_component!(machine, Transition(3, TransitionParameters("A", 2, order=1, cond="x == 0")))
 push!(get_state(machine, "A").outports, 3); push!(get_node(machine, 2).inports, 3);
-add_transition!(machine, TP(2, "B"))
-add_transition!(machine, TP("B", "A", act="x = -1"))
+add_transition!(machine, TransitionParameters(2, "B"))
+add_transition!(machine, TransitionParameters("B", "A", act="x = -1"))
 
 @testset "Core Functions 1" begin
     @testset "Checking the addition of components" begin
@@ -24,9 +24,9 @@ add_transition!(machine, TP("B", "A", act="x = -1"))
             @test state.id == name
             @test state.inports == ports[1]
             @test state.outports == ports[2]
-            @test state.entry == actions[1]
-            @test state.during == actions[2]
-            @test state.exit == actions[3]
+            @test state.actions.entry == actions[1]
+            @test state.actions.during == actions[2]
+            @test state.actions.exit == actions[3]
         end
 
         node_1 = get_node(machine, 1)
@@ -68,16 +68,16 @@ empty!(machine)
         @test isempty(machine.transitions)
     end
 
-    add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
-    add_nodes!(machine, [NP(), NP()])
+    add_states!(machine, [StateParameters("A", en="x += 1;"), StateParameters("B", ex="x += 1;")])
+    add_nodes!(machine, [NodeParameters(), NodeParameters()])
     add_transitions!(
         machine,
         [
-            TP(1),
-            TP(1, "A", act="x = 0"),
-            TP("A", 2, cond="x == 0"),
-            TP(2, "B"),
-            TP("B", "A", cond="x == 0", act="x = -1"),
+            TransitionParameters(1),
+            TransitionParameters(1, "A", act="x = 0"),
+            TransitionParameters("A", 2, cond="x == 0"),
+            TransitionParameters(2, "B"),
+            TransitionParameters("B", "A", cond="x == 0", act="x = -1"),
         ] 
     )
 
@@ -91,20 +91,20 @@ end
 empty!(machine)
 
 @testset "Core Functions 3" begin
-    add_states!(machine, [SP("A", en="x += 1;"), SP("B", ex="x += 1;")])
+    add_states!(machine, [StateParameters("A", en="x += 1;"), StateParameters("B", ex="x += 1;")])
     add_transitions!(
         machine,
         [
-            TP("B"),
-            TP("A"),
+            TransitionParameters("B"),
+            TransitionParameters("A"),
 
-            TP("A", "B", act="1"),
-            TP("A", "B", act="2"),
-            TP("A", "B", act="3"),
+            TransitionParameters("A", "B", act="1"),
+            TransitionParameters("A", "B", act="2"),
+            TransitionParameters("A", "B", act="3"),
 
             
-            TP("B", "A", act="1"),
-            TP("B", "A", act="2"),
+            TransitionParameters("B", "A", act="1"),
+            TransitionParameters("B", "A", act="2"),
         ] 
     )
 
@@ -156,10 +156,10 @@ empty!(machine)
         @test length(state_B.outports) == 3
     end
 
-    add_states!(machine, [SP("C"), SP("D")])
+    add_states!(machine, [StateParameters("C"), StateParameters("D")])
     rm_states!(machine, ["A", "C"])
-    add_nodes!(machine, [NP(), NP(), NP()])
-    add_transition!(machine, TP(1, 2))
+    add_nodes!(machine, [NodeParameters(), NodeParameters(), NodeParameters()])
+    add_transition!(machine, TransitionParameters(1, 2))
     rm_node!(machine, 1)
     rm_transition!(machine, 8)
     rm_nodes!(machine, [2])

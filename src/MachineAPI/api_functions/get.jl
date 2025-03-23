@@ -3,40 +3,40 @@
 #
 
 """
-    get_machine_component(MC::MachineCollection, id::ComponentId)
+    get_machine_component(MC::MachineComponentsDicts; id::ComponentId)
 
 Get the structure of machine components with `id` from some machine collection `MC`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_state!(machine, "A"); add_node!(machine); add_transition!(machine, "A", 1);
 
-julia> get_machine_component(machine.states, "A")
+julia> get_machine_component(machine.states; id="A")
 {0, 1} state A.
 
-julia> get_machine_component(machine.nodes, 1)
+julia> get_machine_component(machine.nodes; id=1)
 {1, 0} node 1.
 
-julia> get_machine_component(machine.transitions, 1)
+julia> get_machine_component(machine.transitions; id=1)
 {"A", 1} transition 1.
 ```
 """
-function get_machine_component(MC::MachineCollection, id::ComponentId)::MachineComponents
+function get_machine_component(MC::MachineComponentsDicts; id::ComponentId)::MachineComponents
     component::Union{Nothing, MachineComponents} = get(MC, id, nothing)
     isnothing(component) && throw_no_component(Val(typeof(component)), id)
     return component
 end
 
 """
-    get_state(machine::Machine, id::String)
+    get_state(machine::Machine; id::String)
 
 Get the structure of state `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_state!(machine, "A"); add_state!(machine, "B");
 
@@ -50,13 +50,13 @@ julia> get_state(machine, "B")
 function get_state end
 
 """
-    get_node(machine::Machine, id::Int)
+    get_node(machine::Machine; id::Int)
 
 Get the structure of node `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_node!(machine); add_node!(machine);
 
@@ -70,13 +70,13 @@ julia> get_node(machine, 2)
 function get_node end
 
 """
-    get_transition(machine::Machine, id::Int)
+    get_transition(machine::Machine; id::Int)
 
 Get the structure of transition `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_node!(machine); add_node!(machine);
 
@@ -94,10 +94,10 @@ function get_transition end
 
 for (fname, field_name, arg_type) in [(:get_state, :states, :String), (:get_node, :nodes, :Int), (:get_transition, :transitions, :Int)]
     @eval begin
-        $fname(machine::Machine, id::$arg_type) = get_machine_component(machine.$field_name, id)
+        $fname(machine::Machine; id::$arg_type) = get_machine_component(machine.$field_name, id=id)
     end
 end
 
-get_node_or_state(machine::Machine, id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
+get_node_or_state(machine::Machine; id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
 
-get_out_transitions(machine::Machine, comp::Union{State, Node}) = [get_transition(machine, output_id) for output_id in comp.outports]
+get_out_transitions(machine::Machine, comp::Union{State, Node}) = [get_transition(machine, id=output_id) for output_id in comp.outports]

@@ -1,7 +1,6 @@
 module MachineAPI
 
-    export Machine, State, Transition, Node, MachineComponents, StateCollection, NodeCollection, TransitionCollection, 
-        MachineCollection, TP, NP, SP
+    export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, StateParameters
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!
     export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, change_connection!
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!

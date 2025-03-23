@@ -1,29 +1,32 @@
 #
 # Core structures for creating a finite state machine
 #
-const ComponentId = Union{String, Int}
+const MachineID = String
+const StateID = String
+const NodeID = Int
+const TransitionID = Int
+const ComponentId = Union{StateID, NodeID, TransitionID}
 
 """
-    TP
+    TransitionParameters
 
 Contains changeable transition parameters.
 
 Fields
+- `parent_id`: unique parent state identifier;
 - `source`: output port of the component from which the transition is directed;
 - `destination`: the input port of the component to which the transition is directed.
 - `order`: the order of execution of the transition;
 - `condition`: transition condition;
 - `action`: action performed during transition.
 """
-mutable struct TP
-    source::Union{Nothing, ComponentId}
+Base.@kwdef struct TransitionParameters
+    parent_id::StateID=""
+    source::Union{Nothing, ComponentId}=nothing
     destination::Union{Nothing, ComponentId}
     order::Int
-    condition::String
-    action::String
-
-    TP(d::ComponentId; order=0, cond="", act="") = new(nothing, d, order, cond, act)
-    TP(s::ComponentId, d::ComponentId; order=0, cond="", act="") = new(s, d, order, cond, act)
+    condition::String=""
+    action::String=""
 end
 
 """
@@ -35,25 +38,33 @@ Fields
 - `id`: unique component identifier;
 - `values`: changeable transition parameters.
 """
-struct Transition
-	id::Int
-	values::TP
+mutable struct Transition
+	id::TransitionID
+    parent_id::StateID
+    source::Union{Nothing, ComponentId}
+    destination::Union{Nothing, ComponentId}
+    order::Int
+    condition::String
+    action::String
 
-	Transition(id, values) = new(id, values)
+	function Transition(id; source, destination, order, parent_id, condition, action)
+        order > 0 && throw(ArgumentError("The execution order of the transition `$id` must be positive."))
+        new(id, parent_id, source, destination, order, condition, action)
+    end
 end
 
 """
-    NP
+    NodeParameters
 
 Contains changeable node parameters.
 
 Fields
-- `parent_id`: unique parent state identifier.
+- `parent_id`: unique parent state identifier;
+- `history`: node is history (`true`/`false`).
 """
-mutable struct NP
-    parent_id::String
-
-    NP(; parent::String="") = new(parent)
+Base.@kwdef struct NodeParameters
+    parent_id::StateID=""
+    history::Bool=false
 end
 
 """
@@ -63,19 +74,25 @@ Auxiliary component.
 
 Fields
 - `id`: node unique identifier;
-- `values`: changeable node parameters;
+- `parent_id`: unique parent state identifier;
 - `inports`: list of component input ports;
-- `outports`: list of component output ports.
+- `outports`: list of component output ports;
+- `history`: node is history (`true`/`false`).
 """
-struct Node
-    id::Int
-    values::NP
-    inports::Vector{Int}
-    outports::Vector{Int}
+mutable struct Node
+    id::NodeID
+    parent_id::StateID
+    inports::Vector{TransitionID}
+    outports::Vector{TransitionID}
+    history::Bool
+
+    function Node(id; parent_id, inports, outports, history)
+        new(id, parent_id, inports, outports, history)
+    end
 end
 
 """
-    SP
+    StateParameters
 
 State parameters.
 
@@ -84,16 +101,16 @@ Fields
 - `parent_id`: unique parent state identifier;
 - `entry`: action performed when a state is activated;
 - `during`: action performed when the state is active;
-- `exit`: the action performed when the state is deactivated.
+- `exit`: the action performed when the state is deactivated;
+- `order`: order of execution of parallel state (if state is not parallel, then order is "nothing");
 """
-mutable struct SP
-    id::String
-    parent_id::String
-    entry::String
-    during::String
-    exit::String
-
-    SP(id; parent="", en="", du="", ex="") = new(id, parent, en, du, ex)
+Base.@kwdef struct StateParameters
+    id::StateID
+    parent_id::StateID=""
+    entry::String=""
+    during::String=""
+    exit::String=""
+    order::Union{Nothing, Int}=nothing
 end
 
 """
@@ -104,49 +121,49 @@ State structure of a machine.
 Fields
 - `id`: unique state identifier (a.k.a. state name);
 - `parent_id`: unique parent state identifier;
+- `entry`: action performed when a state is activated;
+- `during`: action performed when the state is active;
+- `exit`: action performed when the state is deactivated;
 - `substates`: list of substates;
 - `inports`: list of component input ports;
 - `outports`: list of component output ports;
-- `entry`: action performed when a state is activated;
-- `during`: action performed when the state is active;
-- `exit`: the action performed when the state is deactivated.
+- `order`: order of execution of parallel state (if state is not parallel, then order is "nothing");
 """
 mutable struct State
-    id::String
-    parent_id::String
-    substates::Vector{String}
-    inports::Vector{Int}
-    outports::Vector{Int}
+    id::StateID
+    parent_id::StateID
     entry::String
     during::String
     exit::String
-
-    State(id, parent_id, substates, inports, outports, entry, during, exit) = 
-        new(id, parent_id, substates, inports, outports, entry, during, exit)
-    function State(substates::Vector, inports::Vector, outports::Vector, values::SP)
-        new(values.id, values.parent_id, substates, inports, outports, values.entry, values.during, values.exit)
+    substates::Vector{StateID}
+    inports::Vector{TransitionID}
+    outports::Vector{TransitionID}
+    order::Union{Nothing, Int}
+    
+    function State(id; parent_id, substates, inports, outports, entry, during, exit, order)
+        if !isnothing(order)
+            order > 0 && throw(ArgumentError("The execution order of the parallel state `$id` must be positive."))
+        end
+        new(id, parent_id, entry, during, exit, substates, inports, outports, order)
     end
 end
 
 const MachineComponents = Union{State, Node, Transition}
-const StateCollection = Dict{String, State}
-const NodeCollection = Dict{Int, Node}
-const TransitionCollection = Dict{Int, Transition}
-const MachineCollection = Union{StateCollection, NodeCollection, TransitionCollection}
+const MachineComponentsDicts = Union{Dict{String, State}, Dict{Int, Node}, Dict{Int, Transition}}
 
 """
     Data
 
 The structure of the data variable used in the machine.
 """
-struct Data
+Base.@kwdef struct Data
     name::String
-    value::String
-    type::String
+    value::String="nothing"
+    type::String=""
 end
 
 """
-    Machine(name::String)
+    Machine(name::MachineID)
     
 Creates a finite state machine structure named `name`. The structure contains the following fields:   
 - `name`: machine name;   
@@ -157,17 +174,14 @@ Creates a finite state machine structure named `name`. The structure contains th
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine")
+julia> machine = Machine(name="simple_machine")
 {states: 0, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
-struct Machine
-    name::String   
-    states::StateCollection
-    nodes::NodeCollection
-    transitions::TransitionCollection
-    data::Vector{Data}
-
-    Machine(name::String) = new(name, Dict{String, State}(), Dict{Int, Node}(), Dict{Int, Transition}(), Data[])
+Base.@kwdef struct Machine
+    name::MachineID   
+    states::Dict{StateID, State}=Dict{StateID, State}()
+    nodes::Dict{NodeID, Node}=Dict{NodeID, Node}()
+    transitions::Dict{TransitionID, Transition}=Dict{TransitionID, Transition}()
+    data::Vector{Data}=Data[]
 end
-

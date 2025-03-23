@@ -9,9 +9,9 @@ Removing state with name `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
-julia> add_state!(machine, SP("A")); machine
+julia> add_state!(machine, StateParameters("A")); machine
 {states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
 
 julia> rm_state!(machine, "A")
@@ -49,7 +49,7 @@ Removing node with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_node!(machine, 1); machine
 {states: 0, transitions: 0, nodes: 1} machine `simple_machine`.
@@ -88,11 +88,11 @@ Removing transition with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("B")]);
+julia> add_states!(machine, [StateParameters("A"), StateParameters("B")]);
 
-julia> add_transition!(machine, TP("A", "B")); machine
+julia> add_transition!(machine, TransitionParameters("A", "B")); machine
 {states: 2, transitions: 1, nodes: 0} machine `simple_machine`.
 
 julia> rm_transition!(machine, 1)
@@ -134,9 +134,9 @@ Remove states from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("A")]); machine
+julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]); machine
 {states: 2, transitions: 0, nodes: 0} machine `simple_machine`.
 
 julia> rm_states!(machine, ["A", "B"])
@@ -154,7 +154,7 @@ Remove nodes from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
 julia> add_nodes!(machine, N=2); machine
 {states: 0, transitions: 0, nodes: 2} machine `simple_machine`.
@@ -174,11 +174,11 @@ Remove transitions from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(name="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("A")]);
+julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]);
 
-julia> add_transitions(machine, [TP("A", "B"), TP("B", "A")]); machine
+julia> add_transitions(machine, [TransitionParameters("A", "B"), TransitionParameters("B", "A")]); machine
 {states: 2, transitions: 2, nodes: 0} machine `simple_machine`.
 
 julia> rm_transitions!(machine, [1, 2])
