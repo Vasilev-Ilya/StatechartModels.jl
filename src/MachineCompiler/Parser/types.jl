@@ -1,6 +1,11 @@
 #
-# UTILITY TYPES
+# ----- UTILITY TYPES -----
 #
+
+struct MachineParserInput
+    machine::Machine
+    history_states_ids::Set{StateID}
+end
 
 struct ExitStateInfo
     tail::ParseTree
@@ -18,7 +23,7 @@ mutable struct InitializationInfo
 end
 
 #
-# ----- ParseTree TYPES ---
+# ----- ParseTree TYPES -----
 #
 
 abstract type ParseTree end

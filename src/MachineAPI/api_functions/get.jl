@@ -23,11 +23,8 @@ julia> get_machine_component(machine.transitions; id=1)
 {"A", 1} transition 1.
 ```
 """
-function get_machine_component(MC::MachineComponentsDicts; id::ComponentId)::MachineComponents
-    component::Union{Nothing, MachineComponents} = get(MC, id, nothing)
-    isnothing(component) && throw_no_component(Val(typeof(component)), id)
-    return component
-end
+get_machine_component(MC::MachineComponentsDicts; id::ComponentId) = get(MC, id, nothing)
+
 
 """
     get_state(machine::Machine; id::String)
@@ -98,6 +95,6 @@ for (fname, field_name, arg_type) in [(:get_state, :states, :String), (:get_node
     end
 end
 
-get_node_or_state(machine::Machine; id::ComponentId) = id isa String ? machine.states[id] : machine.nodes[id]
+get_node_or_state(machine::Machine; id::ComponentId) = id isa String ? get_state(machine, id=id) : get_node(machine, id=id)
 
-get_out_transitions(machine::Machine, comp::Union{State, Node}) = [get_transition(machine, id=output_id) for output_id in comp.outports]
+get_out_transitions(machine::Machine; comp::Union{State, Node}) = [get_transition(machine, id=output_id) for output_id in comp.outports]
