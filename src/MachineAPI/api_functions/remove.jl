@@ -9,7 +9,7 @@ Removing state with name `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, StateParameters("A")); machine
 {states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
@@ -37,7 +37,6 @@ function rm_state!(machine::Machine, id::String)::Bool
         end
         transition.values.source = nothing
     end
-    isempty(state.parent_id) || delete!(states[state.parent_id].substates, id)
     delete!(states, id)
     return true
 end
@@ -49,7 +48,7 @@ Removing node with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_node!(machine, 1); machine
 {states: 0, transitions: 0, nodes: 1} machine `simple_machine`.
@@ -88,7 +87,7 @@ Removing transition with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_states!(machine, [StateParameters("A"), StateParameters("B")]);
 
@@ -134,7 +133,7 @@ Remove states from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]); machine
 {states: 2, transitions: 0, nodes: 0} machine `simple_machine`.
@@ -154,7 +153,7 @@ Remove nodes from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_nodes!(machine, N=2); machine
 {states: 0, transitions: 0, nodes: 2} machine `simple_machine`.
@@ -174,7 +173,7 @@ Remove transitions from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]);
 

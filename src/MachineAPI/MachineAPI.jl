@@ -2,7 +2,9 @@ module MachineAPI
 
     export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, StateParameters
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!
-    export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, change_connection!
+    export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, get_substates
+    export change_connection!
+    export check_state_is_parent
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!
 
     include("api_types.jl")
@@ -29,7 +31,7 @@ module MachineAPI
         n_s = length(machine.states)
         n_t = length(machine.transitions)
         n_n = length(machine.nodes)
-        return print(io, "{states: $n_s, transitions: $n_t, nodes: $n_n} machine `$(machine.name)`.")
+        return print(io, "{states: $n_s, transitions: $n_t, nodes: $n_n} machine `$(machine.id)`.")
     end
 
     include("common_erros.jl")

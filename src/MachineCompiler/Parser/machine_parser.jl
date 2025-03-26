@@ -86,13 +86,65 @@ function parse_state!(
 )::ParseTree
     (; machine, history_states_ids) = parser_input
     states = machine.states
-    (; tail, parent_name, first_entrance) = initialize_info
-    next = create_cst_for_init_state!(machine, state_id, is_init=is_init, tail=tail)
+    next = get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
     curr_state_name = state.id
+    parent_name = initialize_info.parent_name
     while curr_state_name != parent_name
         curr_state = states[curr_state_name]
         next = ACTION(next, id=curr_state_name, value=get_entry_action(history_states_ids, state=curr_state), type=:entry)
         curr_state_name = curr_state.parent_id
+    end
+    return next
+end
+
+function get_init_state_parse_tree!(
+    parser_input::MachineParserInput;
+    initialization_info::InitializationInfo,
+)::ParseTree
+    (; machine, history_states_ids) = parser_input
+    (; tail, parent_name, first_entrance) = initialization_info
+    states = machine.states
+    substate_name = findfirst(x->x.parent_id == parent_name, states)
+    is_parallel = isnothing(substate_name) ? false : !isnothing(states[substate_name].order)
+    next = tail
+    if is_parallel
+        substates = get_substates(states, parent_name)
+        sort!(substates, by=s->s.order)
+        for i=length(substates):-1:1
+            state = substates[i]
+            func_name = "parallel_entry_$(state.id)$(state.order)_$(machine.id)!"
+            next = FUNCTION_CALL(next, value="$func_name(machine)")
+        end
+    elseif first_entrance || !(parent_name in history_states_ids && any(x->x.second.parent_id == parent_name, states))
+        next = _get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
+    else
+        state = states[parent_name]
+        next = FUNCTION_CALL(next, value="history_entry_$(state.id)_$(machine.id)!(machine)")
+    end
+    return next
+end
+
+function _get_init_state_parse_tree!(
+    parser_input::MachineParserInput;
+    initialization_info::InitializationInfo,
+)::ParseTree
+    machine = parser_input.machine
+    (; tail, parent_name, first_entrance) = initialization_info
+    in_transitions = get_in_transitions(machine.transitions, parent_name)
+    if isempty(in_transitions)
+        substates = get_substates(machine.states, parent_name)
+        if isempty(substates)
+            return tail
+        else
+            next_initialization_info = InitializationInfo(tail, substates[1].parent_id, first_entrance)
+            return parse_state!(parser_input, substates[1].id, next_initialization_info)
+        end
+    end
+
+    next = NODE(Vector{ParseTree}(undef, length(in_transitions)))
+    for in_transition in in_transitions
+        next_initialization_info = InitializationInfo(tail, in_transition.parent_id, first_entrance)
+        next.to[in_transition.order] = parse_transition!(parser_input, in_transition, next_initialization_info)
     end
     return next
 end

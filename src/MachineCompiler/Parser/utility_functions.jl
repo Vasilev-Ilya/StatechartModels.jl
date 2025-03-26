@@ -35,7 +35,7 @@ get_state_label(parent_name::StateId; prefix::String) = "$prefix$parent_name"
 function get_entry_action(history_states_ids::Set{StateID}; state::State)::String
     parent_name = state.parent_id
     state_label = get_state_label(parent_name, prefix="_state")
-    isnothing(state.execution_order) || return "$state_label = true\n$(state.entry)\n"
+    isnothing(state.order) || return "$state_label = true\n$(state.entry)\n"
     action = "$state_label = \"$(state.id)\"\n"
     if parent_name in history_states_ids
         is_active_label = get_state_label(parent_name, prefix="_is_active")

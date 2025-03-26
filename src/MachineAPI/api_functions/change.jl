@@ -9,7 +9,7 @@ Reconnect transition `id` to new source `s` and destination `d`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_states!(machine, [StateParameters("A"), StateParameters("B")]);
 

@@ -72,6 +72,8 @@ end
 struct FUNCTION_CALL
     next::ParseTree
     value::String
+
+    FUNCTION_CALL(next::ParseTree; value::String) = new(next, value)
 end
 
 struct MACHINE_FUNCTION

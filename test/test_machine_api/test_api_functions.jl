@@ -1,4 +1,4 @@
-machine = Machine(name="test_machine")
+machine = Machine(id="test_machine")
 
 add_state!(machine, StateParameters("A", en="x += 1;")); add_component!(machine, State([], [], [], StateParameters("B", ex="x += 1;")));
 add_node!(machine); add_component!(machine, Node(2, NodeParameters(), [], []));

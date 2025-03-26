@@ -9,7 +9,7 @@ Get the structure of machine components with `id` from some machine collection `
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, "A"); add_node!(machine); add_transition!(machine, "A", 1);
 
@@ -33,7 +33,7 @@ Get the structure of state `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, "A"); add_state!(machine, "B");
 
@@ -53,7 +53,7 @@ Get the structure of node `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_node!(machine); add_node!(machine);
 
@@ -73,7 +73,7 @@ Get the structure of transition `id`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_node!(machine); add_node!(machine);
 
@@ -95,6 +95,21 @@ for (fname, field_name, arg_type) in [(:get_state, :states, :String), (:get_node
     end
 end
 
+"""
+"""
 get_node_or_state(machine::Machine; id::ComponentId) = id isa String ? get_state(machine, id=id) : get_node(machine, id=id)
 
+"""
+"""
 get_out_transitions(machine::Machine; comp::Union{State, Node}) = [get_transition(machine, id=output_id) for output_id in comp.outports]
+
+"""
+"""
+get_substates(states::Dict{StateId, State}, parent_name::StateId) = State[state for (_, state) in states if state.parent_id == parent_name]
+
+get_substates(states::Dict{StateId, State}, parent_state::State) = get_substates(states, parent_state.parent_id)
+
+"""
+"""
+get_in_transitions(transitions::Dict{TransitionId, Transition}, parent_name::StateId) = 
+    Transition[tra for (_, tra) in transitions if isnothing(tra.source) && tra.parent_id == parent_name]

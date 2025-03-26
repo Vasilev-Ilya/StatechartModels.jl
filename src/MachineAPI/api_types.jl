@@ -124,7 +124,6 @@ Fields
 - `entry`: action performed when a state is activated;
 - `during`: action performed when the state is active;
 - `exit`: action performed when the state is deactivated;
-- `substates`: list of substates;
 - `inports`: list of component input ports;
 - `outports`: list of component output ports;
 - `order`: order of execution of parallel state (if state is not parallel, then order is "nothing");
@@ -135,16 +134,15 @@ mutable struct State
     entry::String
     during::String
     exit::String
-    substates::Vector{StateID}
     inports::Vector{TransitionID}
     outports::Vector{TransitionID}
     order::Union{Nothing, Int}
     
-    function State(id; parent_id, substates, inports, outports, entry, during, exit, order)
+    function State(id; parent_id, inports, outports, entry, during, exit, order)
         if !isnothing(order)
             order > 0 && throw(ArgumentError("The execution order of the parallel state `$id` must be positive."))
         end
-        new(id, parent_id, entry, during, exit, substates, inports, outports, order)
+        new(id, parent_id, entry, during, exit, inports, outports, order)
     end
 end
 
@@ -163,10 +161,10 @@ Base.@kwdef struct Data
 end
 
 """
-    Machine(name::MachineID)
+    Machine
     
-Creates a finite state machine structure named `name`. The structure contains the following fields:   
-- `name`: machine name;   
+Creates a finite state machine structure named `id`. The structure contains the following fields:   
+- `id`: unique machine identifier (a.k.a. machine name);   
 - `states`: dictionary of states;   
 - `nodes`: dictionary of nodes;   
 - `transitions`: dictionary of transitions;   
@@ -174,12 +172,12 @@ Creates a finite state machine structure named `name`. The structure contains th
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine")
+julia> machine = Machine(id="simple_machine")
 {states: 0, transitions: 0, nodes: 0} machine `simple_machine`.
 ```
 """
 Base.@kwdef struct Machine
-    name::MachineID   
+    id::MachineID   
     states::Dict{StateID, State}=Dict{StateID, State}()
     nodes::Dict{NodeID, Node}=Dict{NodeID, Node}()
     transitions::Dict{TransitionID, Transition}=Dict{TransitionID, Transition}()

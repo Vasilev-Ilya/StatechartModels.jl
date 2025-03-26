@@ -9,7 +9,7 @@ Add state with name `name` with parameters `parameters` (see `StateParameters` s
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, parameters=StateParameters(id="A"))
 {0, 0} state `A` with parent ``.
@@ -29,11 +29,9 @@ function add_state!(machine::Machine; parameters::StateParameters)::State
     
     if !isempty(parent_id)
         haskey(states, parent_id) || throw_no_component(Val(State), parent_id)
-        push!(states[parent_id].substates, id)
     end
     
-    state = State(id, parent_id=parent_id, substates=String[], inports=Int[], outports=Int[], entry=entry, 
-        during=during, exit=exit, order=order)
+    state = State(id, parent_id=parent_id, inports=Int[], outports=Int[], entry=entry, during=during, exit=exit, order=order)
     states[id] = state
     return state
 end
@@ -45,7 +43,7 @@ Add node with parameters `parameters` (see `NodeParameters` struct for info) to 
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_node!(machine)
 {0, 0} node `1` with parent ``.
@@ -75,7 +73,7 @@ Add transition with parameters `parameters` (see `TransitionParameters` struct f
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, parameters=StateParameters(id="A")); add_state!(machine, parameters=StateParameters(id="B");
 
@@ -121,7 +119,7 @@ The states to be added are stored in a vector `parameters_collection`. Each elem
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_states!(
         machine, 
@@ -147,7 +145,7 @@ The nodes to be added are stored in a vector `parameters_collection`. Each eleme
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_nodes!(machine, parameters_collection=[NodeParameters(), NodeParameters()])
 
@@ -166,7 +164,7 @@ The transitions to be added are stored in a vector `parameters_collection`. Each
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_state!(machine, parameters=StateParameters(id="A")); add_node!(machine);
 
@@ -212,7 +210,7 @@ Explicitly add a component `component` to the machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_component!(machine, component=State("A", inports=[1], outports=[2], during="x += 1"))
 {1, 1} state `A`.
@@ -250,7 +248,7 @@ Adds multiple components `components` to the machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine(name="simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_component!(
            machine, 
