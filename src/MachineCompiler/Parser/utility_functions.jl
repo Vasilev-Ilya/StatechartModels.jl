@@ -19,7 +19,6 @@ end
 function update_exit_state_info!(exit_state_info::ExitStateInfo; states::Dict{String, State}, target_state::State)
     target_name = target_state.id
     source_name = exit_state_info.source_name
-    exit_state_info.target_name = target_name
     eldest_parent_index = exit_state_info.eldest_parent_index
     index_valid = !isnothing(eldest_parent_index) && eldest_parent_index != 0
     if index_valid && check_state_is_parent(states, parent_name=target_name, daughter_name=source_name)

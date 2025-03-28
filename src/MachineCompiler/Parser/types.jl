@@ -11,7 +11,6 @@ struct ExitStateInfo
     tail::ParseTree
     source_names_hierarchy::Vector{String}
     source_name::String
-    target_name::Union{Nothing, String}
     eldest_parent_index::Union{Nothing, Int}
     direction_out::Bool
 end
@@ -20,6 +19,24 @@ mutable struct InitializationInfo
     tail::ParseTree
     parent_name::String
     first_entrance::Bool
+end
+
+struct ExitProcessing
+    tail::ParseTree
+    entry_states_names::AbstractArray{StateId}
+    exit_states_names::AbstractArray{StateId}
+    entry_state_name::StateId
+    exit_state_name::StateId
+
+    function ExitProcessing(; 
+        tail::ParseTree,
+        entry_state_name::StateId,
+        exit_state_name::StateId,
+        entry_states_names::AbstractArray{StateId},
+        exit_states_names::AbstractArray{StateId},
+    )
+        return new(tail, entry_states_names, exit_states_names, entry_state_name, exit_state_name)
+    end
 end
 
 #
