@@ -182,7 +182,7 @@ function _get_state_exit_parse_tree!(
             return next
         end
     end
-    next = get_exit_parse_tree(next, states[exit_state_name], machine)
+    next = get_exit_parse_tree(parser_input, state=states[exit_state_name], tail=next)
     return next
 end
 
