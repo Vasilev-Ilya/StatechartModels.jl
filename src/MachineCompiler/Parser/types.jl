@@ -4,7 +4,7 @@
 
 struct MachineParserInput
     machine::Machine
-    history_states_ids::Set{StateID}
+    history_states_names::Set{StateID}
 end
 
 struct ExitStateInfo

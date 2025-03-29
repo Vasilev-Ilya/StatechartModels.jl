@@ -131,7 +131,126 @@ function _get_state_exit_parse_tree!(
     parser_input::MachineParserInput;
     exit_info::ExitProcessing
 )::ParseTree
+    (; machine, history_states_names) = parser_input
+    (; tail, entry_state_name, exit_state_name, entry_states_names, exit_states_names) = exit_info
+    states = machine.states
+    next = tail
+    if isempty(entry_states_names)
+        next = get_init_state_parse_tree!(parser_input, initialization_info=InitializationInfo(next, entry_state_name, false))
+    else
+        index_parallel_states = higher_parallel_states(states, entry_states_names)
+        if isnothing(index_parallel_states)
+            next = get_init_state_parse_tree!(parser_input, initialization_info=InitializationInfo(next, entry_state_name, false))
+            next = get_changed_states_entry_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=entry_states_names)
+        else
+            index, parallel_states = index_parallel_states
+            order = states[entry_states_names[index]].order
+            for i=length(parallel_states):-1:order+1
+                parallel_state = parallel_states[i]
+                func_name = "parallel_entry_$(parallel_state.id)$(parallel_state.order)_$(machine.id)!"
+                next = FUNCTION_CALL(next, value="$func_name(__machine__)")
+            end
+            next = get_init_state_parse_tree!(parser_input, initialization_info=InitializationInfo(next, entry_state_name, false))
+            reduced_entry_states_names = @view entry_states_names[index:end]
+            next = get_changed_states_entry_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=reduced_entry_states_names)
+            for i=order-1:-1:1
+                parallel_state = parallel_states[i]
+                func_name = "parallel_entry_$(parallel_state.id)$(parallel_state.order)_$(machine.id)!"
+                next = FUNCTION_CALL(next, value="$func_name(__machine__)")
+            end
+            reduced_entry_states_names = @view entry_states_names[begin:index-1]
+            next = get_changed_states_entry_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=reduced_entry_states_names)
+        end
+    end
+    if !isempty(exit_states_names)
+        index_parallel_states = higher_parallel_states(states, exit_states_names)
+        if isnothing(index_parallel_states)
+            next = get_changed_states_exit_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=exit_states_names)
+        else
+            index, parallel_states = index_parallel_states
+            reduced_exit_states_names = @view exit_states_names[begin:index-1]
+            next = get_changed_states_exit_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=reduced_exit_states_names)
+            for parallel_state in parallel_states
+                func_name = "parallel_exit_$(parallel_state.id)$(parallel_state.order)_$(machine.id)!"
+                next = FUNCTION_CALL(next, value="$func_name(__machine__)")
+            end
+            return next
+        end
+    end
+    next = get_exit_parse_tree(next, states[exit_state_name], machine)
+    return next
+end
+
+function get_changed_states_exit_actions_parse_tree(
+    tail_cst::ParseTree; 
+    history_states_names::Set{StateID}, 
+    states::Dict{StateId, State}, 
+    changed_parents_names::AbstractArray{StateId},
+)::ParseTree
+    next = tail_cst
+    for state_name in changed_parents_names
+        exit_act = get_exit_action(history_states_names, state=states[state_name])
+        next = ACTION(next, value=exit_act, type=:exit, id=state_name)
+    end
+    return next
+end
+
+function get_changed_states_entry_actions_parse_tree(
+    tail::ParseTree; 
+    history_states_names::Set{StateID},
+    states::Dict{StateId, State}, 
+    changed_parents_names::AbstractArray{StateId},
+)::ParseTree
+    next = tail
+    for state_name in reverse(changed_parents_names)
+        entry_act = get_entry_action(history_states_names, state=states[state_name])
+        next = ACTION(next, value=entry_act, type=:entry, id=state_name)
+    end
+    return next
+end
+
+function get_exit_parse_tree(parser_input::MachineParserInput; state::State, tail::ParseTree)::ParseTree
+    (; machine, history_states_names) = parser_input
+    states = machine.states
+    substates = get_substates(states, state.id)
+    isempty(substates) && return tail
     
+    state_leaves = State[]
+    get_all_state_leaves!(state_leaves, state, states)
+    filter!(x->(isnothing(x.order) || x.order == 1), state_leaves)
+    head_next = NODE(Vector{ParseTree}(undef, length(state_leaves)))
+    for (i, state_leaf) in enumerate(state_leaves)
+        changed_parents_names = StateId[]
+        curr_state = state_leaf
+        while curr_state.id != state.id
+            pushfirst!(changed_parents_names, curr_state.id)
+            curr_state = states[curr_state.parent_id]
+        end
+        index_parallel_states = higher_parallel_states(states, changed_parents_names)
+        next = tail
+        if isnothing(index_parallel_states)
+            next = get_changed_states_exit_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=changed_parents_names)
+        else
+            index, parallel_states = index_parallel_states
+            reduced_exit_states_names = @view changed_parents_names[begin:index-1]
+            next = get_changed_states_exit_actions_parse_tree(next, history_states_names=history_states_names, 
+                states=states, changed_parents_names=reduced_exit_states_names)
+            for parallel_state in parallel_states
+                func_name = "parallel_exit_$(parallel_state.id)$(parallel_state.order)_$(machine.id)!"
+                next = FUNCTION_CALL(next, value="$func_name(__machine__)")
+            end
+        end
+        state_label = get_state_label(state_leaf.parent_id, prefix="_state")
+        condition = isnothing(state_leaf.order) ? "$state_label == \"$(state_leaf.id)\"" : "$state_label == true"
+        head_next.to[i] = CONDITION(next, value=condition)
+    end
+    return head_next
 end
 
 function parse_state!(
@@ -139,14 +258,14 @@ function parse_state!(
     state::State,
     initialization_info::InitializationInfo,
 )::ParseTree
-    (; machine, history_states_ids) = parser_input
+    (; machine, history_states_names) = parser_input
     states = machine.states
     next = get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
     curr_state_name = state.id
     parent_name = initialize_info.parent_name
     while curr_state_name != parent_name
         curr_state = states[curr_state_name]
-        next = ACTION(next, id=curr_state_name, value=get_entry_action(history_states_ids, state=curr_state), type=:entry)
+        next = ACTION(next, id=curr_state_name, value=get_entry_action(history_states_names, state=curr_state), type=:entry)
         curr_state_name = curr_state.parent_id
     end
     return next
@@ -156,7 +275,7 @@ function get_init_state_parse_tree!(
     parser_input::MachineParserInput;
     initialization_info::InitializationInfo,
 )::ParseTree
-    (; machine, history_states_ids) = parser_input
+    (; machine, history_states_names) = parser_input
     (; tail, parent_name, first_entrance) = initialization_info
     states = machine.states
     substate_name = findfirst(x->x.parent_id == parent_name, states)
@@ -168,13 +287,13 @@ function get_init_state_parse_tree!(
         for i=length(substates):-1:1
             state = substates[i]
             func_name = "parallel_entry_$(state.id)$(state.order)_$(machine.id)!"
-            next = FUNCTION_CALL(next, value="$func_name(machine)")
+            next = FUNCTION_CALL(next, value="$func_name(__machine__)")
         end
-    elseif first_entrance || !(parent_name in history_states_ids && any(x->x.second.parent_id == parent_name, states))
+    elseif first_entrance || !(parent_name in history_states_names && any(x->x.second.parent_id == parent_name, states))
         next = _get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
     else
         state = states[parent_name]
-        next = FUNCTION_CALL(next, value="history_entry_$(state.id)_$(machine.id)!(machine)")
+        next = FUNCTION_CALL(next, value="history_entry_$(state.id)_$(machine.id)!(__machine__)")
     end
     return next
 end

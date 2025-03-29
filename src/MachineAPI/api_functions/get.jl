@@ -107,7 +107,7 @@ get_out_transitions(machine::Machine; comp::Union{State, Node}) = [get_transitio
 """
 get_substates(states::Dict{StateId, State}, parent_name::StateId) = State[state for (_, state) in states if state.parent_id == parent_name]
 
-get_substates(states::Dict{StateId, State}, parent_state::State) = get_substates(states, parent_state.parent_id)
+get_substates(states::Dict{StateId, State}, parent_state::State) = get_substates(states, parent_state.id)
 
 """
 """
