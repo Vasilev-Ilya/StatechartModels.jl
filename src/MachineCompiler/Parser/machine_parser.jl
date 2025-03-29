@@ -223,7 +223,7 @@ function get_exit_parse_tree(parser_input::MachineParserInput; state::State, tai
     state_leaves = State[]
     get_all_state_leaves!(state_leaves, state, states)
     filter!(x->(isnothing(x.order) || x.order == 1), state_leaves)
-    head_next = NODE(Vector{ParseTree}(undef, length(state_leaves)))
+    head_next = FORK(Vector{ParseTree}(undef, length(state_leaves)))
     for (i, state_leaf) in enumerate(state_leaves)
         changed_parents_names = StateId[]
         curr_state = state_leaf
@@ -315,10 +315,77 @@ function _get_init_state_parse_tree!(
         end
     end
 
-    next = NODE(Vector{ParseTree}(undef, length(in_transitions)))
+    next = FORK(Vector{ParseTree}(undef, length(in_transitions)))
     for in_transition in in_transitions
         next_initialization_info = InitializationInfo(tail, in_transition.parent_id, first_entrance)
         next.to[in_transition.order] = parse_transition!(parser_input, in_transition, next_initialization_info)
+    end
+    return next
+end
+
+function get_state_during_parse_tree(parser_input::MachineParserInput; state::State, tail::ParseTree)::ParseTree
+    machine = parser_input.machine
+    state_out_transitions = get_out_transitions(machine, comp=state)
+    first_in_indx = findfirst(x->!(x.direction_out), state_out_transitions)
+    state_id = state.id
+    cst = _parse_substates_scope!(parser_input, parent_name=state_id, tail=tail)
+    n_out_trans = length(state_out_transitions)
+    if !isnothing(first_in_indx)
+        n_out_trans = first_in_indx - 1
+        out_transitions = @view(state_out_transitions[first_in_indx:end])
+        n_csts = length(out_transitions) + 1
+        fork = NODE(Vector{ParseTree}(undef, n_csts))
+        fork.to[n_csts] = cst
+        if !isempty(out_transitions)
+            process_state_out_transitions!(fork, machine, cycle_infos, state_id, out_transitions=out_transitions, 
+                tail=tail, is_out=false, order_offset=-n_out_trans)
+        end
+        cst = fork
+    end
+
+    n_csts = 1 + n_out_trans
+    fork = NODE(Vector{ParseTree}(undef, n_csts))
+    fork.to[n_csts] = ACTION(ParseTree[cst], action=state.label.during, action_type="during", id=state_id)
+    out_transitions = @view(state_out_transitions[begin:n_out_trans])
+    if !isempty(out_transitions)
+        process_state_out_transitions!(fork, machine, cycle_infos, state_id, out_transitions=out_transitions, 
+            tail=tail, is_out=true)
+    end
+    return fork
+end
+
+function _parse_substates_scope!(parser_input::MachineParserInput; parent_name::StateId, tail::ParseTree)::ParseTree
+    machine = parser_input.machine
+    states = machine.states
+    substates = get_substates(states, parent_name)
+    (isempty(substates) && !isempty(parent_name)) && return tail
+    init_state_parse_tree = get_init_state_parse_tree!(parser_input, initialization_info=InitializationInfo(tail, parent_name, true))
+    isempty(substates) && return init_state_parse_tree
+    next = init_state_parse_tree
+    is_exclusive = isnothing(substates[1].order)
+    state_label = get_state_label(parent_name, prefix="_state")
+    if is_exclusive
+        next = FORK(Vector{ParseTree}(undef, length(substates)+1))
+        next.to[1] = LINE(init_state_parse_tree, label=TransitionLabel(condition="$state_label === \"$INIT_STATE_ID\""))
+        for (i, substate) in enumerate(substates)
+            next.to[i+1] = LINE(
+                    get_state_during_parse_tree(machine, cycle_infos, substate, tail=tail), 
+                    label=TransitionLabel(condition="$state_label == \"$(substate.id)\""),
+                )
+        end
+    else
+        next = FORK(Vector{ParseTree}(undef, 2))
+        next.to[1] = LINE(init_state_parse_tree, label=TransitionLabel(condition="$state_label == false", 
+            action="$state_label = true"))
+        sort!(substates, by=s->s.order)
+        cst = tail
+        for i=length(substates):-1:1
+            substate = substates[i]
+            fname_postfix = "$(get_state_name(substate.name))$(substate.order)_$(chart_id_to_name(machine.id))"
+            func_name = "parallel_state_during_$(fname_postfix)!"
+            cst = FUNCTION_CALL(cst, args=String["$func_name(__c__, __TIME__)"])
+        end
+        next.to[2] = LINE(cst)
     end
     return next
 end
