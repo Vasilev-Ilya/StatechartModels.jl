@@ -2,18 +2,16 @@ module FiniteAutomaton
 
 export Machine, 
     State,
-    SP,
+    StateParameters,
     Transition, 
-    TP, 
+    TransitionParameters, 
     Node,
-    NP,
+    NodeParameters,
     MachineComponents, 
-    StateCollection, 
-    NodeCollection, 
-    TransitionCollection, 
-    MachineCollection,
+    MachineComponentsDicts,
+    Data,
 
-    # core functions
+    # API functions
     add_state!, 
     add_states!,
     add_transition!, 
@@ -22,18 +20,29 @@ export Machine,
     add_nodes!, 
     add_component!, 
     add_components!, 
+    add_data!,
     get_machine_component, 
     get_node,
     get_transition,
     get_state,
+    get_state_parent_tree_vector,
+    get_in_transitions,
     change_connection!,
     rm_state!, 
     rm_states!, 
     rm_node!, 
     rm_nodes!, 
     rm_transition!,
-    rm_transitions!
+    rm_transitions!,
+    rm_data!,
 
-include("MachineCore/MachineCore.jl")
-using .MachineCore
+    # Parser
+    PARSE_TREE,
+    ParsedMachine,
+    parse_machine
+
+include("MachineAPI/MachineAPI.jl")
+using .MachineAPI
+include("MachineCompiler/MachineCompiler.jl")
+using .MachineCompiler
 end # module FiniteAutomaton

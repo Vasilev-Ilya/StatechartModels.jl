@@ -9,9 +9,9 @@ Removing state with name `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
-julia> add_state!(machine, SP("A")); machine
+julia> add_state!(machine, StateParameters("A")); machine
 {states: 1, transitions: 0, nodes: 0} machine `simple_machine`.
 
 julia> rm_state!(machine, "A")
@@ -27,17 +27,16 @@ function rm_state!(machine::Machine, id::String)::Bool
     state = states[id]
     transitions = machine.transitions
     for tra_id in state.inports
-        transitions[tra_id].values.destination = nothing
+        transitions[tra_id].destination = nothing
     end
     for tra_id in state.outports
         transition = transitions[tra_id]
-        transition.values.order = 1
+        transition.order = 1
         for (_, tra) in transitions
-            isnothing(tra.values.source) && (transition.values.order += 1;)
+            isnothing(tra.source) && (transition.order += 1;)
         end
-        transition.values.source = nothing
+        transition.source = nothing
     end
-    isempty(state.parent_id) || delete!(states[state.parent_id].substates, id)
     delete!(states, id)
     return true
 end
@@ -49,7 +48,7 @@ Removing node with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_node!(machine, 1); machine
 {states: 0, transitions: 0, nodes: 1} machine `simple_machine`.
@@ -67,15 +66,15 @@ function rm_node!(machine::Machine, id::Int)::Bool
     node = nodes[id]
     transitions = machine.transitions
     for tra_id in node.inports
-        transitions[tra_id].values.destination = nothing
+        transitions[tra_id].destination = nothing
     end
     for tra_id in node.outports
         transition = transitions[tra_id]
-        transition.values.order = 1
+        transition.order = 1
         for (_, tra) in transitions
-            isnothing(tra.values.source) && (transition.values.order += 1;)
+            isnothing(tra.source) && (transition.order += 1;)
         end
-        transition.values.source = nothing
+        transition.source = nothing
     end
     delete!(nodes, id)
     return true
@@ -88,11 +87,11 @@ Removing transition with id `id` from machine.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("B")]);
+julia> add_states!(machine, [StateParameters("A"), StateParameters("B")]);
 
-julia> add_transition!(machine, TP("A", "B")); machine
+julia> add_transition!(machine, TransitionParameters("A", "B")); machine
 {states: 2, transitions: 1, nodes: 0} machine `simple_machine`.
 
 julia> rm_transition!(machine, 1)
@@ -106,20 +105,20 @@ function rm_transition!(machine::Machine, id::Int)::Bool
     transitions = machine.transitions
     haskey(transitions, id) || return false
     tra = transitions[id]
-    s = tra.values.source
+    s = tra.source
     if !isnothing(s)
-        comp_ports = _get_node_or_state(machine, s).outports
+        comp_ports = get_node_or_state(machine, s).outports
         for tra_id in comp_ports
             comp_tra = transitions[tra_id]
-            comp_tra.values.order > tra.values.order || continue
-            comp_tra.values.order -= 1
+            comp_tra.order > tra.order || continue
+            comp_tra.order -= 1
         end
         delete!(comp_ports, id)
     end
 
-    d = tra.values.destination
+    d = tra.destination
     if !isnothing(d)
-        comp_ports = _get_node_or_state(machine, d).inports
+        comp_ports = get_node_or_state(machine, d).inports
         delete!(comp_ports, id)
     end
 
@@ -134,9 +133,9 @@ Remove states from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("A")]); machine
+julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]); machine
 {states: 2, transitions: 0, nodes: 0} machine `simple_machine`.
 
 julia> rm_states!(machine, ["A", "B"])
@@ -154,7 +153,7 @@ Remove nodes from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
 julia> add_nodes!(machine, N=2); machine
 {states: 0, transitions: 0, nodes: 2} machine `simple_machine`.
@@ -174,11 +173,11 @@ Remove transitions from the machine specified in the list `ids`.
 
 # Examples
 ```jldoctest
-julia> machine = Machine("simple_machine");
+julia> machine = Machine(id="simple_machine");
 
-julia> add_states!(machine, [SP("A"), SP("A")]);
+julia> add_states!(machine, [StateParameters("A"), StateParameters("A")]);
 
-julia> add_transitions(machine, [TP("A", "B"), TP("B", "A")]); machine
+julia> add_transitions(machine, [TransitionParameters("A", "B"), TransitionParameters("B", "A")]); machine
 {states: 2, transitions: 2, nodes: 0} machine `simple_machine`.
 
 julia> rm_transitions!(machine, [1, 2])
@@ -198,4 +197,16 @@ for (fname, method_name, arg_type) in [(:rm_states!, :rm_state!, :String), (:rm_
             return nothing
         end
     end
+end
+
+"""
+    rm_data!(machine::Machine; name::String)
+
+Remove data from the machine by name.
+"""
+function rm_data!(machine::Machine; name::String)
+    data = machine.data
+    var_index = findfirst(var->var.name == name, data)
+    isnothing(var_index) || deleteat!(data, var_index)
+    return nothing
 end
