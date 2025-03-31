@@ -160,7 +160,7 @@ Base.@kwdef struct Data
     name::String
     value::String="nothing"
     type::String=""
-    scope::UInts
+    scope::UInt
 end
 
 """

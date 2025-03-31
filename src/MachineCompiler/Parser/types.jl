@@ -73,7 +73,7 @@ struct FORK <: PARSE_TREE
     ref_comp_info::Union{Nothing, RefMachineCompInfo}
     
     FORK(next::Vector{PARSE_TREE}) = new(next, nothing)
-    FORK(next::Vector{PARSE_TREE}; id::Union{Int, String}, type::Symbol) = new(next, RefMachineCompInfo(type, id))
+    FORK(next::Vector{<:PARSE_TREE}; id::Union{Int, String}, type::Symbol) = new(next, RefMachineCompInfo(type, id))
     FORK(next::PARSE_TREE) = new(PARSE_TREE[next], nothing)
     FORK(next::PARSE_TREE; id::Union{Int, String}, type::Symbol) = new(PARSE_TREE[next], RefMachineCompInfo(type, id))
 end
@@ -95,5 +95,14 @@ end
 
 struct MACHINE_FUNCTION
     body::PARSE_TREE
-    head::String
+    head::Vector{String}
+
+    MACHINE_FUNCTION(body::PARSE_TREE; head::Vector{String}) = new(body, head)
+end
+
+Base.@kwdef struct ParsedMachine
+    id::MachineID
+    main_function::PARSE_TREE
+    machine_functions::Vector{PARSE_TREE}
+    data::Vector{Data}
 end
