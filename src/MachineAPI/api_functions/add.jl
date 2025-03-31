@@ -269,3 +269,17 @@ function add_components!(machine::Machine; components::Vector{MachineComponents}
     end
     return nothing
 end
+
+"""
+    add_data!(machine::Machine; name::String, scope::Symbol, value::String="nothing", type::String="")
+
+Adds a data to the machine.
+"""
+function add_data!(machine::Machine; name::String, scope::Symbol, value::String="nothing", type::String="")
+    startswith(name, '_') && error("A variable name cannot start with a character `_`.")
+    hasfield(typeof(DATA_SCOPES), scope) && error("Unknown variable scope `$scope`. \
+        Allowed scopes: `input_data`, `local_data`, `output_data`.")
+
+    push!(machine.data, Data(name=name, value=value, scope=scope, type=type))
+    return nothing
+end

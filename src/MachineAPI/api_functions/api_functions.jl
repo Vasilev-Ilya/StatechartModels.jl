@@ -17,6 +17,8 @@ function Base.delete!(v::Vector, target_elem)
     return nothing
 end
 
+const DATA_SCOPES = (input_data=0, local_data=1, output_data=2, special_data=3)
+
 include("add.jl")
 include("get.jl")
 include("remove.jl")

@@ -27,6 +27,7 @@ Base.@kwdef struct TransitionParameters
     order::Int
     condition::String=""
     action::String=""
+    direction_out::Bool=true
 end
 
 """
@@ -46,10 +47,11 @@ mutable struct Transition
     order::Int
     condition::String
     action::String
+    direction_out::Bool
 
-	function Transition(id; source, destination, order, parent_id, condition, action)
+	function Transition(id; source, destination, order, parent_id, condition, action, direction_out)
         order > 0 && throw(ArgumentError("The execution order of the transition `$id` must be positive."))
-        new(id, parent_id, source, destination, order, condition, action)
+        new(id, parent_id, source, destination, order, condition, action, direction_out)
     end
 end
 
@@ -158,6 +160,7 @@ Base.@kwdef struct Data
     name::String
     value::String="nothing"
     type::String=""
+    scope::UInts
 end
 
 """

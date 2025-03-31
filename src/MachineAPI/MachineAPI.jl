@@ -1,11 +1,13 @@
 module MachineAPI
 
     export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, StateParameters
-    export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!
-    export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, get_substates
+    export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!,
+        add_data!
+    export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, get_substates,
+        get_state_parent_tree_vector
     export change_connection!
     export check_state_is_parent
-    export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!
+    export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!, rm_data!
 
     include("api_types.jl")
 

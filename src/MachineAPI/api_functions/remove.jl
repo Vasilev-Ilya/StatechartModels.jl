@@ -198,3 +198,15 @@ for (fname, method_name, arg_type) in [(:rm_states!, :rm_state!, :String), (:rm_
         end
     end
 end
+
+"""
+    rm_data!(machine::Machine; name::String)
+
+Remove data from the machine by name.
+"""
+function rm_data!(machine::Machine; name::String)
+    data = machine.data
+    var_index = findfirst(var->var.name == name, data)
+    isnothing(var_index) || deleteat!(data, var_index)
+    return nothing
+end

@@ -113,3 +113,17 @@ get_substates(states::Dict{StateId, State}, parent_state::State) = get_substates
 """
 get_in_transitions(transitions::Dict{TransitionId, Transition}, parent_name::StateId) = 
     Transition[tra for (_, tra) in transitions if isnothing(tra.source) && tra.parent_id == parent_name]
+
+"""
+    get_state_parent_tree_vector(states::Dict{StateId, State}, state_name::StateId)
+"""
+function get_state_parent_tree_vector(states::Dict{StateId, State}, state_name::StateId)::Vector{StateId}
+    curr_state = states[state_name]
+    state_parent_tree_vector = StateId[]
+    while !isnothing(curr_state)
+        push!(state_parent_tree_vector, curr_state.id)
+        curr_state = get(states, curr_state.parent_id, nothing)
+    end
+    reverse!(state_parent_tree_vector)
+    return state_parent_tree_vector
+end
