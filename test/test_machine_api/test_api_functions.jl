@@ -50,11 +50,11 @@ add_transition!(machine, TransitionParameters("B", "A", act="x = -1"))
         ]
         for (tra, id, ports, values) in test_transitions
             @test tra.id == id
-            @test tra.values.source == ports[1]
-            @test tra.values.destination == ports[2]
-            @test tra.values.order == values[1]
-            @test tra.values.condition == values[2]
-            @test tra.values.action == values[3]
+            @test tra.source == ports[1]
+            @test tra.destination == ports[2]
+            @test tra.order == values[1]
+            @test tra.condition == values[2]
+            @test tra.action == values[3]
         end
     end
 end

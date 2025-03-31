@@ -95,17 +95,17 @@ julia> add_transition!(machine, parameters=TransitionParameters(destination="A",
 function add_transition!(machine::Machine; parameters::TransitionParameters)::Transition
     transitions = machine.transitions
     id = length(transitions) + 1
-    (; parent_id, source, destination, order, condition, action) = p
+    (; parent_id, source, destination, order, condition, action, direction_out) = parameters
 
     if !isnothing(source)
-        comp = get_node_or_state(machine, source)
+        comp = get_node_or_state(machine, id=source)
         push!(comp.outports, id)
     end
-    comp = get_node_or_state(machine, destination)
+    comp = get_node_or_state(machine, id=destination)
     push!(comp.inports, id)
 
     transition = Transition(id, parent_id=parent_id, source=source, destination=destination, order=order, 
-        condition=condition, action=action)
+        condition=condition, action=action, direction_out=direction_out)
     transitions[id] = transition
     return transition
 end

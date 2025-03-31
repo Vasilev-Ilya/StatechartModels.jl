@@ -2,7 +2,7 @@
 # Test MachineAPI
 #
 function test_connection(tra, s, d, order)
-    return tra.values.source == s && tra.values.destination == d && tra.values.order == order
+    return tra.source == s && tra.destination == d && tra.order == order
 end
 
 include("test_api_functions.jl")

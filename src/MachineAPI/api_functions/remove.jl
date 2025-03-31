@@ -27,15 +27,15 @@ function rm_state!(machine::Machine, id::String)::Bool
     state = states[id]
     transitions = machine.transitions
     for tra_id in state.inports
-        transitions[tra_id].values.destination = nothing
+        transitions[tra_id].destination = nothing
     end
     for tra_id in state.outports
         transition = transitions[tra_id]
-        transition.values.order = 1
+        transition.order = 1
         for (_, tra) in transitions
-            isnothing(tra.values.source) && (transition.values.order += 1;)
+            isnothing(tra.source) && (transition.order += 1;)
         end
-        transition.values.source = nothing
+        transition.source = nothing
     end
     delete!(states, id)
     return true
@@ -66,15 +66,15 @@ function rm_node!(machine::Machine, id::Int)::Bool
     node = nodes[id]
     transitions = machine.transitions
     for tra_id in node.inports
-        transitions[tra_id].values.destination = nothing
+        transitions[tra_id].destination = nothing
     end
     for tra_id in node.outports
         transition = transitions[tra_id]
-        transition.values.order = 1
+        transition.order = 1
         for (_, tra) in transitions
-            isnothing(tra.values.source) && (transition.values.order += 1;)
+            isnothing(tra.source) && (transition.order += 1;)
         end
-        transition.values.source = nothing
+        transition.source = nothing
     end
     delete!(nodes, id)
     return true
@@ -105,18 +105,18 @@ function rm_transition!(machine::Machine, id::Int)::Bool
     transitions = machine.transitions
     haskey(transitions, id) || return false
     tra = transitions[id]
-    s = tra.values.source
+    s = tra.source
     if !isnothing(s)
         comp_ports = get_node_or_state(machine, s).outports
         for tra_id in comp_ports
             comp_tra = transitions[tra_id]
-            comp_tra.values.order > tra.values.order || continue
-            comp_tra.values.order -= 1
+            comp_tra.order > tra.order || continue
+            comp_tra.order -= 1
         end
         delete!(comp_ports, id)
     end
 
-    d = tra.values.destination
+    d = tra.destination
     if !isnothing(d)
         comp_ports = get_node_or_state(machine, d).inports
         delete!(comp_ports, id)

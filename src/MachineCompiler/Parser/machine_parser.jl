@@ -2,25 +2,27 @@
 function parse_node! end
 
 for (field_name, type_name) in [(:exit_state_info, :ExitStateInfo), (:initialization_info, :InitializationInfo)]
-    function parse_node!(
-        parser_input::MachineParserInput,
-        node::Node,
-        $field_name::$type_name,
-    )::PARSE_TREE
-        machine = parser_input.machine
-        out_transitions = get_out_transitions(machine, comp=node)
-        next = Vector{PARSE_TREE}(undef, length(out_transitions))
-        for out_tran in out_transitions
-            next[out_tran.values.order] = parse_transition!(parser_input, out_tran, $field_name)
+    @eval begin
+        function parse_node!(
+            parser_input::MachineParserInput,
+            node::Node,
+            $field_name::$type_name,
+        )::PARSE_TREE
+            machine = parser_input.machine
+            out_transitions = get_out_transitions(machine, comp=node)
+            next = Vector{PARSE_TREE}(undef, length(out_transitions))
+            for out_tran in out_transitions
+                next[out_tran.order] = parse_transition!(parser_input, out_tran, $field_name)
+            end
+            return FORK(next, node.id, :node)
         end
-        return FORK(next, id=node.id, type=:node)
     end
 end
 
 function _parse_transition(next::PARSE_TREE; action::String, condition::String, id::Int)::PARSE_TREE
-    next = ACTION(next, id=id, type=:transition, value=action)
+    next = ACTION(next, id, :transition, action)
     if !is_only_spaces(condition)
-        next = CONDITION(next, id=id, type=:transition, value=condition)
+        next = CONDITION(next, id, :transition, condition)
     end
     return next
 end
@@ -31,7 +33,7 @@ function parse_transition!(
     exit_state_info::ExitStateInfo,
 )::PARSE_TREE
     machine = parser_input.machine
-    (; destination, action, condition) = transition.values
+    (; destination, action, condition) = transition
     states = machine.states
     comp = get_node_or_state(machine, id=destination)
     if comp isa State
@@ -45,14 +47,14 @@ function parse_transition!(
             target_state = states[comp.parent_id]
             update_exit_state_info!(exit_state_info, states=states, target_state=target_state)
             next = parse_state!(parser_input, target_state, exit_state_info)
-            next = FORK(next, id=comp.id, type=:node_history)
+            next = FORK(next, comp.id, :node_history)
         else
             (; source_name, direction_out, tail) = exit_state_info
             next = parse_substates_scope!(parser_input, parent_name=source_name, tail=tail)
-            next = FORK(next, id=comp.id, type=:node)
+            next = FORK(next, comp.id, :node)
             if direction_out
                 during_act = states[source_name].actions.during
-                next = ACTION(next, value=during_act, type=:during, id=source_name)
+                next = ACTION(next, source_name, :during, during_act)
             end
         end
     end
@@ -65,7 +67,7 @@ function parse_transition!(
     initialization_info::InitializationInfo,
 )::PARSE_TREE
     machine = parser_input.machine
-    (; destination, action, condition) = transition.values
+    (; destination, action, condition) = transition
     comp = get_node_or_state(machine, id=destination)
     if comp isa State
         next = parse_state!(parser_input, comp, initialization_info)
@@ -195,7 +197,7 @@ function get_changed_states_exit_actions_parse_tree(
     next = tail_cst
     for state_name in changed_parents_names
         exit_act = get_exit_action(history_states_names, state=states[state_name])
-        next = ACTION(next, value=exit_act, type=:exit, id=state_name)
+        next = ACTION(next, state_name, :exit, exit_act)
     end
     return next
 end
@@ -209,7 +211,7 @@ function get_changed_states_entry_actions_parse_tree(
     next = tail
     for state_name in reverse(changed_parents_names)
         entry_act = get_entry_action(history_states_names, state=states[state_name])
-        next = ACTION(next, value=entry_act, type=:entry, id=state_name)
+        next = ACTION(next, state_name, :entry, entry_act)
     end
     return next
 end
@@ -248,7 +250,7 @@ function get_exit_parse_tree(parser_input::MachineParserInput; state::State, tai
         end
         state_label = get_state_label(state_leaf.parent_id, prefix="_state")
         condition = isnothing(state_leaf.order) ? "$state_label == \"$(state_leaf.id)\"" : "$state_label == true"
-        head_next.to[i] = CONDITION(next, value=condition)
+        head_next.next[i] = CONDITION(next, condition)
     end
     return head_next
 end
@@ -259,13 +261,13 @@ function parse_state!(
     initialization_info::InitializationInfo,
 )::PARSE_TREE
     (; machine, history_states_names) = parser_input
+    (; tail, first_entrance, parent_name) = initialization_info
     states = machine.states
-    next = get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
+    next = get_init_state_parse_tree!(parser_input, initialization_info=InitializationInfo(tail, state.id, first_entrance))
     curr_state_name = state.id
-    parent_name = initialize_info.parent_name
     while curr_state_name != parent_name
         curr_state = states[curr_state_name]
-        next = ACTION(next, id=curr_state_name, value=get_entry_action(history_states_names, state=curr_state), type=:entry)
+        next = ACTION(next, curr_state_name, :entry, get_entry_action(history_states_names, state=curr_state))
         curr_state_name = curr_state.parent_id
     end
     return next
@@ -318,7 +320,7 @@ function _get_init_state_parse_tree!(
     next = FORK(Vector{PARSE_TREE}(undef, length(in_transitions)))
     for in_transition in in_transitions
         next_initialization_info = InitializationInfo(tail, in_transition.parent_id, first_entrance)
-        next.to[in_transition.order] = parse_transition!(parser_input, in_transition, next_initialization_info)
+        next.next[in_transition.order] = parse_transition!(parser_input, in_transition, next_initialization_info)
     end
     return next
 end
@@ -335,7 +337,7 @@ function get_state_during_parse_tree(parser_input::MachineParserInput; state::St
         out_transitions = @view(state_out_transitions[first_in_indx:end])
         n_trees = length(out_transitions) + 1
         fork = FORK(Vector{PARSE_TREE}(undef, n_trees))
-        fork.to[n_trees] = next
+        fork.next[n_trees] = next
         if !isempty(out_transitions)
             get_state_out_parse_tree!(parser_input, fork, state_name, out_transitions=out_transitions, 
                 tail=tail, direction_out=false, order_offset=-n_out_trans)
@@ -345,7 +347,7 @@ function get_state_during_parse_tree(parser_input::MachineParserInput; state::St
 
     n_trees = 1 + n_out_trans
     fork = FORK(Vector{PARSE_TREE}(undef, n_trees))
-    fork.to[n_trees] = ACTION(next, action=state.during, type=:during, id=state_name)
+    fork.next[n_trees] = ACTION(next, state_name, :during, state.during)
     out_transitions = @view(state_out_transitions[begin:n_out_trans])
     if !isempty(out_transitions)
         get_state_out_parse_tree!(parser_input, fork, state_name, out_transitions=out_transitions, 
@@ -368,7 +370,7 @@ function get_state_out_parse_tree!(
         exit_info = ExitStateInfo(tail=tail, source_names_hierarchy=parents_names, source_name=state_name, 
             direction_out=direction_out)
         order = out_transition.order + order_offset
-        fork.to[order] = parse_transition!(parser_input, out_transition, exit_info)
+        fork.next[order] = parse_transition!(parser_input, out_transition, exit_info)
     end
     return nothing
 end
@@ -384,18 +386,18 @@ function parse_substates_scope!(parser_input::MachineParserInput; parent_name::S
     state_label = get_state_label(parent_name, prefix="_state")
     if is_exclusive
         next = FORK(Vector{PARSE_TREE}(undef, length(substates)+1))
-        next.to[1] = CONDITION(init_state_parse_tree, value="isempty($state_label)")
+        next.next[1] = CONDITION(init_state_parse_tree, "isempty($state_label)")
         for (i, substate) in enumerate(substates)
-            next.to[i+1] = CONDITION(
+            next.next[i+1] = CONDITION(
                     get_state_during_parse_tree(parser_input, state=substate, tail=tail), 
-                    value="$state_label == \"$(substate.id)\"",
+                    "$state_label == \"$(substate.id)\"",
                 )
         end
     else
         next = FORK(Vector{PARSE_TREE}(undef, 2))
-        next.to[1] = CONDITION(
-                ACTION(init_state_parse_tree, value="$state_label = true"),
-                value="$state_label == false"
+        next.next[1] = CONDITION(
+                ACTION(init_state_parse_tree, "$state_label = true"),
+                "$state_label == false"
             )
         sort!(substates, by=s->s.order)
         next_subtree = tail
@@ -404,7 +406,7 @@ function parse_substates_scope!(parser_input::MachineParserInput; parent_name::S
             func_name = "parallel_during_$(substate.id)$(substate.order)_$(machine.id)!"
             next_subtree = FUNCTION_CALL(next_subtree, value="$func_name(__machine__)")
         end
-        next.to[2] = next_subtree
+        next.next[2] = next_subtree
     end
     return next
 end
@@ -418,14 +420,14 @@ function add_history_entry_function!(machine_funcs::Vector{PARSE_TREE}, parser_i
         next = FORK(Vector{PARSE_TREE}(undef, n_indexs))
         state_label = get_state_label(state_name, prefix="_state")
         fork = _get_init_state_parse_tree(parser_input, initialization_info=InitializationInfo(LEAF(), state_name, false))
-        next.to[1] = CONDITION(fork, value="isempty($state_label)")
+        next.next[1] = CONDITION(fork, "isempty($state_label)")
         for i=2:n_indexs
             substate = substates[i-1]
             initialization_info = InitializationInfo(LEAF(), substate.id, false)
             next_tree = get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
             entry_act = get_entry_action(parser_input.history_states_names, substate)
-            next_tree = ACTION(next_tree, id=substate.id, value=entry_act, type=:entry)
-            next.to[i] = CONDITION(next_tree, value="$state_label == \"$(substate.id)\"")
+            next_tree = ACTION(next_tree, substate.id, :entry, entry_act)
+            next.next[i] = CONDITION(next_tree, "$state_label == \"$(substate.id)\"")
         end
         next = FORK(PARSE_TREE[next, LEAF()])
         push!(
@@ -449,7 +451,7 @@ end
 
 function add_parallel_state_exit_function!(machine_funcs::Vector{PARSE_TREE}, parser_input::MachineParserInput, state::State)
     exit_act = get_exit_action(parser_input.history_states_names, state=state)
-    next = ACTION(LEAF(), id=state.id, value=exit_act, type=:exit)
+    next = ACTION(LEAF(), state.id, :exit, exit_act)
     next = get_exit_parse_tree(parser_input, state=state, tail=next)
     next = FORK(PARSE_TREE[next, LEAF()])
     func_name = "parallel_exit_$(state.id)$(state.order)_$(parser_input.machine.id)!"
@@ -461,7 +463,7 @@ function add_parallel_state_entry_function!(machine_funcs::Vector{PARSE_TREE}, p
     initialization_info = InitializationInfo(LEAF(), state.id, false)
     next = get_init_state_parse_tree!(parser_input, initialization_info=initialization_info)
     entry_act = get_entry_action(parser_input.history_states_names, state)
-    next = ACTION(next, id=state.id, value=entry_act, type=:entry)
+    next = ACTION(next, state.id, :entry, entry_act)
     next = FORK(PARSE_TREE[next, LEAF()])
     func_name = "parallel_entry_$(state.id)$(state.order)_$(parser_input.machine.id)!"
     push!(machine_funcs, MACHINE_FUNCTION(next, head=String[func_name]))
@@ -488,12 +490,12 @@ function get_all_machine_functions(parser_input::MachineParserInput)::Vector{PAR
 end
 
 function parse_machine(machine::Machine)::ParsedMachine
-    history_states_names = Set([node.parent_id for (_, node) if node.history])
+    history_states_names = Set([node.parent_id for (_, node) in machine.nodes if node.history])
     parser_input = MachineParserInput(machine, history_states_names)
     machine_functions = get_all_machine_functions(parser_input)
     data = machine.data
-    tail = LEAF(out_values=String[var.name for var in machine.data if var.scope == 2])
-    main_function = parse_substates_scope(parser_input, parent_name="", tail=tail)
+    tail = LEAF(String[var.name for var in machine.data if var.scope == 2])
+    main_function = parse_substates_scope!(parser_input, parent_name="", tail=tail)
     special_data = get_special_data(machine.states, history_states_names)
     return ParsedMachine(
             id=machine.id,

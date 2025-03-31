@@ -1,11 +1,12 @@
 module MachineAPI
 
     export MachineID, StateID, TransitionID, NodeID
-    export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, StateParameters
+    export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, 
+        StateParameters, Data
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!,
         add_data!
     export get_machine_component, get_node, get_transition, get_state, get_out_transitions, get_node_or_state, get_substates,
-        get_state_parent_tree_vector
+        get_state_parent_tree_vector, get_in_transitions
     export change_connection!
     export check_state_is_parent
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!, rm_data!
@@ -13,8 +14,8 @@ module MachineAPI
     include("api_types.jl")
 
     function Base.show(io::IO, ::MIME"text/plain", transition::Transition)
-        s = transition.values.source
-        d = transition.values.destination
+        s = transition.source
+        d = transition.destination
         return print(io, "{$s, $d} transition `$(transition.id)`.")
     end
 
@@ -27,7 +28,7 @@ module MachineAPI
     function Base.show(io::IO, ::MIME"text/plain", node::Node)
         n_i = length(node.inports)
         n_o = length(node.outports)
-        return print(io, "{$n_i, $n_o} node `$(node.id)` with parent `$(node.values.parent_id)`.")
+        return print(io, "{$n_i, $n_o} node `$(node.id)` with parent `$(node.parent_id)`.")
     end
 
     function Base.show(io::IO, ::MIME"text/plain", machine::Machine)

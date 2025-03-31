@@ -24,14 +24,14 @@ function change_connection!(machine::Machine, id::Int; s::Union{Nothing, Compone
     transitions = machine.transitions
     transition = get_machine_component(transitions, id)
     
-    old_s = transition.values.source
-    old_d = transition.values.destination
+    old_s = transition.source
+    old_d = transition.destination
     if old_s != s
-        order = transition.values.order
+        order = transition.order
         if isnothing(old_s)
             for (_, tra) in transitions
-                (isnothing(tra.values.source) && tra.values.order > order) || continue
-                tra.values.order -= 1
+                (isnothing(tra.source) && tra.order > order) || continue
+                tra.order -= 1
             end
             comp_outputs = get_node_or_state(machine, s).outports
             push!(comp_outputs, id)
@@ -40,14 +40,14 @@ function change_connection!(machine::Machine, id::Int; s::Union{Nothing, Compone
             comp_outputs = get_node_or_state(machine, old_s).outports
             for tra_id in comp_outputs
                 tra = transitions[tra_id]
-                tra.values.order > order || continue
-                tra.values.order -= 1
+                tra.order > order || continue
+                tra.order -= 1
             end
             delete!(comp_outputs, id)
             if isnothing(s)
                 order = 1
                 for (_, tra) in transitions
-                    isnothing(tra.values.source) && (order += 1;)
+                    isnothing(tra.source) && (order += 1;)
                 end
             else
                 comp_outputs = get_node_or_state(machine, s).outports
@@ -55,8 +55,8 @@ function change_connection!(machine::Machine, id::Int; s::Union{Nothing, Compone
                 order = length(comp_outputs)
             end
         end
-        transition.values.order = order
-        transition.values.source = s
+        transition.order = order
+        transition.source = s
     end
 
     if old_d != d
@@ -64,7 +64,7 @@ function change_connection!(machine::Machine, id::Int; s::Union{Nothing, Compone
         delete!(comp_inputs, id)
         comp_inputs = get_node_or_state(machine, d).inports
         push!(comp_inputs, id)
-        transition.values.destination = d
+        transition.destination = d
     end
     return transition
 end

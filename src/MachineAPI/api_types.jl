@@ -50,7 +50,7 @@ mutable struct Transition
     direction_out::Bool
 
 	function Transition(id; source, destination, order, parent_id, condition, action, direction_out)
-        order > 0 && throw(ArgumentError("The execution order of the transition `$id` must be positive."))
+        order > 0 || throw(ArgumentError("The execution order of the transition `$id` must be positive."))
         new(id, parent_id, source, destination, order, condition, action, direction_out)
     end
 end

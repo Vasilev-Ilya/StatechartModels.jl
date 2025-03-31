@@ -93,16 +93,16 @@ function get_special_data(states::Dict{StateID, State}, history_states_names::Se
     data = Data[]
     states_with_unique_parents = unique(s->s.parent_id, values(states))
     for state in states_with_unique_parents
-        state_name = state.parent_id
+        parent_name = state.parent_id
         if isnothing(state.order)
-            if parent_id in history_states_names
-                push!(data, Data(name="_is_active$state_name", scope=3, type="Bool", value="false"))
+            if parent_name in history_states_names
+                push!(data, Data(name="_is_active$parent_name", scope=3, type="Bool", value="false"))
             end
-            push!(data, Data("_state$state_name", scope=3, type="String", value="\"\""))
+            push!(data, Data(name="_state$parent_name", scope=3, type="String", value="\"\""))
         else
-            push!(data, Data("_state$state_name", scope=3, type="Bool", value="false"))
+            push!(data, Data(name="_state$parent_name", scope=3, type="Bool", value="false"))
         end
-        push!(data, Data("_counter$state_name", scope=3, type="Int", value="0"))
+        push!(data, Data(name="_counter$parent_name", scope=3, type="Int", value="0"))
     end
     return data
 end
