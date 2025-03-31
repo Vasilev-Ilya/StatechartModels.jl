@@ -32,7 +32,12 @@ export Machine,
     rm_nodes!, 
     rm_transition!,
     rm_transitions!,
-    rm_data!
+    rm_data!,
+
+    # Parser
+    PARSE_TREE,
+    ParsedMachine,
+    parse_machine
 
 include("MachineAPI/MachineAPI.jl")
 using .MachineAPI
