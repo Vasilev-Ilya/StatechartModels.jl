@@ -29,7 +29,7 @@ function update_exit_state_info!(exit_state_info::ExitStateInfo; states::Dict{St
     return nothing
 end
 
-get_state_label(parent_name::StateId; prefix::String) = "$prefix$parent_name"
+get_state_label(parent_name::StateID; prefix::String) = "$prefix$parent_name"
 
 function get_entry_action(history_states_names::Set{StateID}; state::State)::String
     parent_name = state.parent_id
@@ -58,7 +58,7 @@ function get_exit_action(history_states_names::Set{StateID}; state::State)::Stri
     return exit_act
 end
 
-function higher_parallel_states(states::Dict{StateId, State}, states_names::AbstractArray{StateId})::Union{Nothing, Tuple{Int, Vector{State}}}
+function higher_parallel_states(states::Dict{StateID, State}, states_names::AbstractArray{StateID})::Union{Nothing, Tuple{Int, Vector{State}}}
     for (i, state_name) in enumerate(states_names)
         state = states[state_name]
         if !isnothing(state.order)
@@ -70,14 +70,14 @@ function higher_parallel_states(states::Dict{StateId, State}, states_names::Abst
     return nothing
 end
 
-function get_all_state_leaves!(state_leaves::Vector{State}, state::State, states::Dict{StateId, State})
+function get_all_state_leaves!(state_leaves::Vector{State}, state::State, states::Dict{StateID, State})
     if !isempty(get_substates(states, state))
         _get_all_state_leaves!(state_leaves, state, states)
     end
     return nothing
 end
 
-function _get_all_state_leaves!(state_leaves::Vector{State}, state::State, states::Dict{StateId, State})
+function _get_all_state_leaves!(state_leaves::Vector{State}, state::State, states::Dict{StateID, State})
     substates = get_substates(states, states[state.id])
     if isempty(substates)
         push!(state_leaves, state)
@@ -89,7 +89,7 @@ function _get_all_state_leaves!(state_leaves::Vector{State}, state::State, state
     return nothing
 end
 
-function get_special_data(states::Dict{StateId, State}, history_states_names::Set{StateID})::Vector{Data}
+function get_special_data(states::Dict{StateID, State}, history_states_names::Set{StateID})::Vector{Data}
     data = Data[]
     states_with_unique_parents = unique(s->s.parent_id, values(states))
     for state in states_with_unique_parents

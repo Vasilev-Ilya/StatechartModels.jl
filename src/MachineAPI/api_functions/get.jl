@@ -105,21 +105,21 @@ get_out_transitions(machine::Machine; comp::Union{State, Node}) = [get_transitio
 
 """
 """
-get_substates(states::Dict{StateId, State}, parent_name::StateId) = State[state for (_, state) in states if state.parent_id == parent_name]
+get_substates(states::Dict{StateID, State}, parent_name::StateID) = State[state for (_, state) in states if state.parent_id == parent_name]
 
-get_substates(states::Dict{StateId, State}, parent_state::State) = get_substates(states, parent_state.id)
+get_substates(states::Dict{StateID, State}, parent_state::State) = get_substates(states, parent_state.id)
 
 """
 """
-get_in_transitions(transitions::Dict{TransitionId, Transition}, parent_name::StateId) = 
+get_in_transitions(transitions::Dict{TransitionID, Transition}, parent_name::StateID) = 
     Transition[tra for (_, tra) in transitions if isnothing(tra.source) && tra.parent_id == parent_name]
 
 """
-    get_state_parent_tree_vector(states::Dict{StateId, State}, state_name::StateId)
+    get_state_parent_tree_vector(states::Dict{StateID, State}, state_name::StateID)
 """
-function get_state_parent_tree_vector(states::Dict{StateId, State}, state_name::StateId)::Vector{StateId}
+function get_state_parent_tree_vector(states::Dict{StateID, State}, state_name::StateID)::Vector{StateID}
     curr_state = states[state_name]
-    state_parent_tree_vector = StateId[]
+    state_parent_tree_vector = StateID[]
     while !isnothing(curr_state)
         push!(state_parent_tree_vector, curr_state.id)
         curr_state = get(states, curr_state.parent_id, nothing)

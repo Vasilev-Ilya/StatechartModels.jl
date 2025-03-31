@@ -1,5 +1,6 @@
 module MachineAPI
 
+    export MachineID, StateID, TransitionID, NodeID
     export Machine, State, Transition, Node, MachineComponents, MachineComponentsDicts, TransitionParameters, NodeParameters, StateParameters
     export add_state!, add_states!, add_transition!, add_transitions!, add_node!, add_nodes!, add_component!, add_components!,
         add_data!

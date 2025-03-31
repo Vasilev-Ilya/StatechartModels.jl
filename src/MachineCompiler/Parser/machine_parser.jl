@@ -95,7 +95,7 @@ function parse_state!(
         source_names_hierarchy[i] != target_names_hierarchy[i] && (j = i; break;)
     end
 
-    exit_states_names = entry_states_names = StateId[]
+    exit_states_names = entry_states_names = StateID[]
     exit_state_name = source_name
     entry_state_name = target_name
     if j == 0
@@ -189,8 +189,8 @@ end
 function get_changed_states_exit_actions_parse_tree(
     tail_cst::PARSE_TREE; 
     history_states_names::Set{StateID}, 
-    states::Dict{StateId, State}, 
-    changed_parents_names::AbstractArray{StateId},
+    states::Dict{StateID, State}, 
+    changed_parents_names::AbstractArray{StateID},
 )::PARSE_TREE
     next = tail_cst
     for state_name in changed_parents_names
@@ -203,8 +203,8 @@ end
 function get_changed_states_entry_actions_parse_tree(
     tail::PARSE_TREE; 
     history_states_names::Set{StateID},
-    states::Dict{StateId, State}, 
-    changed_parents_names::AbstractArray{StateId},
+    states::Dict{StateID, State}, 
+    changed_parents_names::AbstractArray{StateID},
 )::PARSE_TREE
     next = tail
     for state_name in reverse(changed_parents_names)
@@ -225,7 +225,7 @@ function get_exit_parse_tree(parser_input::MachineParserInput; state::State, tai
     filter!(x->(isnothing(x.order) || x.order == 1), state_leaves)
     head_next = FORK(Vector{PARSE_TREE}(undef, length(state_leaves)))
     for (i, state_leaf) in enumerate(state_leaves)
-        changed_parents_names = StateId[]
+        changed_parents_names = StateID[]
         curr_state = state_leaf
         while curr_state.id != state.id
             pushfirst!(changed_parents_names, curr_state.id)
@@ -357,7 +357,7 @@ end
 function get_state_out_parse_tree!(
     parser_input::MachineParserInput,
     fork::FORK, 
-    state_name::StateId; 
+    state_name::StateID; 
     out_transitions::SubArray{Transition}, 
     tail::PARSE_TREE,
     direction_out::Bool,
@@ -373,7 +373,7 @@ function get_state_out_parse_tree!(
     return nothing
 end
 
-function parse_substates_scope!(parser_input::MachineParserInput; parent_name::StateId, tail::PARSE_TREE)::PARSE_TREE
+function parse_substates_scope!(parser_input::MachineParserInput; parent_name::StateID, tail::PARSE_TREE)::PARSE_TREE
     machine = parser_input.machine
     states = machine.states
     substates = get_substates(states, parent_name)
@@ -436,7 +436,7 @@ function add_history_entry_function!(machine_funcs::Vector{PARSE_TREE}, parser_i
     return nothing
 end
 
-function add_parallel_states_functions!(machine_funcs::Vector{PARSE_TREE}, parent_name::StateId, parser_input::MachineParserInput)
+function add_parallel_states_functions!(machine_funcs::Vector{PARSE_TREE}, parent_name::StateID, parser_input::MachineParserInput)
     states = parser_input.machine.states
     parallel_states = get_substates(states, parent_name)
     for state in parallel_states

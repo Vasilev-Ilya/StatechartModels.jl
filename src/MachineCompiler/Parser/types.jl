@@ -23,17 +23,17 @@ end
 
 struct ExitProcessing
     tail::PARSE_TREE
-    entry_states_names::AbstractArray{StateId}
-    exit_states_names::AbstractArray{StateId}
-    entry_state_name::StateId
-    exit_state_name::StateId
+    entry_states_names::AbstractArray{StateID}
+    exit_states_names::AbstractArray{StateID}
+    entry_state_name::StateID
+    exit_state_name::StateID
 
     function ExitProcessing(; 
         tail::PARSE_TREE,
-        entry_state_name::StateId,
-        exit_state_name::StateId,
-        entry_states_names::AbstractArray{StateId},
-        exit_states_names::AbstractArray{StateId},
+        entry_state_name::StateID,
+        exit_state_name::StateID,
+        entry_states_names::AbstractArray{StateID},
+        exit_states_names::AbstractArray{StateID},
     )
         return new(tail, entry_states_names, exit_states_names, entry_state_name, exit_state_name)
     end
