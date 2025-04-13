@@ -2,7 +2,7 @@
 # Parser
 #
 module Parser
-    using FiniteAutomaton.MachineAPI
+    using StatechartModels.MachineAPI
     
     export parse_machine, PARSE_TREE, ParsedMachine
 

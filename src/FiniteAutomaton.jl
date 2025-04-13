@@ -1,4 +1,4 @@
-module FiniteAutomaton
+module StatechartModels
 
 export Machine, 
     State,
@@ -45,4 +45,4 @@ include("MachineAPI/MachineAPI.jl")
 using .MachineAPI
 include("MachineCompiler/MachineCompiler.jl")
 using .MachineCompiler
-end # module FiniteAutomaton
+end # module StatechartModels
