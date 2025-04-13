@@ -11,6 +11,8 @@ module MachineAPI
     export check_state_is_parent
     export rm_state!, rm_states!, rm_node!, rm_nodes!, rm_transition!, rm_transitions!, rm_data!
 
+    const DATA_SCOPES = (:INPUT, :LOCAL, :OUTPUT)
+
     include("api_types.jl")
 
     function Base.show(io::IO, ::MIME"text/plain", transition::Transition)
@@ -29,6 +31,10 @@ module MachineAPI
         n_i = length(node.inports)
         n_o = length(node.outports)
         return print(io, "{$n_i, $n_o} node `$(node.id)` with parent `$(node.parent_id)`.")
+    end
+
+    function Base.show(io::IO, ::MIME"text/plain", var::Data)
+        return print(io, "The variable `$(var.name)` {value: $(var.value), type: $(var.data_type), scope: $(var.scope)}.")
     end
 
     function Base.show(io::IO, ::MIME"text/plain", machine::Machine)

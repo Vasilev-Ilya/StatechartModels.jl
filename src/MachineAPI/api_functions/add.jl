@@ -273,13 +273,20 @@ end
 """
     add_data!(machine::Machine; name::String, scope::Symbol, value::String="nothing", type::String="")
 
-Adds a data to the machine.
-"""
-function add_data!(machine::Machine; name::String, scope::Symbol, value::String="nothing", type::String="")
-    startswith(name, '_') && error("A variable name cannot start with a character `_`.")
-    hasfield(typeof(DATA_SCOPES), scope) && error("Unknown variable scope `$scope`. \
-        Allowed scopes: `input_data`, `local_data`, `output_data`.")
+Adds a data to the machine.   
 
-    push!(machine.data, Data(name=name, value=value, scope=scope, type=type))
+Set `replace` flag to `true` if you need to replace an existing value in data.
+Otherwise, an `ErrorExecption` will be thrown.
+"""
+function add_data!(machine::Machine; name::String, scope::Symbol, init_value::Any=nothing, data_type::DataType=Any, replace::Bool=false)
+    var = Data(name=name, value=init_value, scope=scope, data_type=data_type)
+    data = machine.data
+    var_indx = findfirst(x->x.name == var.name, data)
+    if !isnothing(var_indx)
+        replace || error("The variable `$(var.name) is already declared in the machine `$(machine.id)`.")
+        data[var_indx] = var
+    else
+        push!(data, var)
+    end
     return nothing
 end

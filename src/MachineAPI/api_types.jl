@@ -155,12 +155,29 @@ const MachineComponentsDicts = Union{Dict{String, State}, Dict{Int, Node}, Dict{
     Data
 
 The structure of the data variable used in the machine.
+
+Fields
+- `name`: variable name. The variable name must not starts with `_` or digit;
+- `value`: initial value of the variable. The variable initial value must be of the type \
+    or be a subtype of type specified in the field `data_type`;
+- `data_type`: type of the variable;
+- `scope`: the scope of variable usage. Th variable can have an `INPUT`, `LOCAL` or `OUTPUT` scope.
 """
-Base.@kwdef struct Data
+struct Data
     name::String
-    value::String="nothing"
-    type::String=""
-    scope::UInt
+    value::Any
+    data_type::DataType
+    scope::Symbol
+
+    function Data(; name::String, scope::Symbol, value::Any, data_type::DataType)
+        startswith(name, r"[_0-9]") && 
+            throw(ArgumentError("The variable name must not starts with `_` or digit. Received name: `$name`."))
+        typeof(value) <: data_type || 
+            throw(ArgumentError("The variable `$name` value `$value` must be of type `$data_type`. Received type: `$(typeof(value))`."))
+        scope in DATA_SCOPES || 
+            throw(ArgumentError("The variable `$name` scope `$scope` must be `INPUT`, `LOCAL` or `OUTPUT`. Received scope: `$scope`."))
+        new(name, value, data_type, scope)
+    end
 end
 
 """
