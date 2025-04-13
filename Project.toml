@@ -1,4 +1,4 @@
-name = "FiniteAutomaton"
+name = "StatechartModels"
 uuid = "d0da9bb8-85ec-491c-9553-fc342b141156"
 authors = ["ilyav "]
 version = "0.1.0"
